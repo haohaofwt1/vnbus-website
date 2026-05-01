@@ -1,0 +1,70 @@
+<svg width="1600" height="960" viewBox="0 0 1600 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="182" y1="24" x2="1218" y2="834" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF"/>
+      <stop offset="0.52" stop-color="#EAF2FF"/>
+      <stop offset="1" stop-color="#E8EEF9"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1234 270) rotate(136.102) scale(452.246 283.302)">
+      <stop stop-color="#FFD8A8" stop-opacity="0.9"/>
+      <stop offset="0.44" stop-color="#FFC07A" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#FFC07A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mountainFar" x1="317" y1="219" x2="992" y2="694" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DDE8F8"/>
+      <stop offset="1" stop-color="#C6D8EE"/>
+    </linearGradient>
+    <linearGradient id="mountainMid" x1="365" y1="263" x2="1155" y2="733" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C8D8EF"/>
+      <stop offset="1" stop-color="#A8C0E4"/>
+    </linearGradient>
+    <linearGradient id="road" x1="607" y1="624" x2="1115" y2="934" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6F7F98"/>
+      <stop offset="1" stop-color="#3B4C66"/>
+    </linearGradient>
+    <linearGradient id="roadHighlight" x1="530" y1="726" x2="1146" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8F2E7" stop-opacity="0.08"/>
+      <stop offset="0.48" stop-color="#FFF8EF" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FFF8EF" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="routeLine" x1="184" y1="98" x2="1256" y2="542" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F67F6" stop-opacity="0.24"/>
+      <stop offset="0.55" stop-color="#8BB3FF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#FF8A2D" stop-opacity="0.22"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="960" fill="url(#sky)"/>
+  <rect width="1600" height="960" fill="url(#sunGlow)"/>
+
+  <path d="M0 522C164 470 280 404 422 394C566 384 657 453 766 462C912 473 1020 347 1179 342C1319 338 1446 403 1600 472V960H0V522Z" fill="url(#mountainFar)"/>
+  <path d="M0 622C145 543 250 479 372 486C509 495 587 577 725 572C874 566 988 432 1161 444C1317 455 1453 547 1600 624V960H0V622Z" fill="url(#mountainMid)"/>
+  <path d="M0 706C151 650 258 616 380 625C520 636 645 738 816 736C1009 734 1155 605 1366 609C1453 611 1538 642 1600 674V960H0V706Z" fill="#93ADD6" fill-opacity="0.34"/>
+
+  <path d="M690 620C576 664 469 770 375 960H1397C1254 857 1116 754 947 687C852 649 775 635 690 620Z" fill="url(#road)"/>
+  <path d="M752 671C644 708 547 782 469 960H1222C1117 880 1008 811 872 755C834 740 793 705 752 671Z" fill="url(#roadHighlight)"/>
+  <path d="M773 662C736 689 699 723 678 754C726 742 773 735 818 739C897 745 966 777 1029 821C1083 859 1147 903 1228 960H1282C1190 889 1112 827 1044 781C972 732 894 694 807 681C796 679 785 673 773 662Z" fill="#FFF4D7" fill-opacity="0.72"/>
+
+  <path d="M104 155C267 97 438 103 578 153C713 201 832 287 977 291C1124 296 1271 208 1448 160" stroke="url(#routeLine)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="7 15"/>
+  <path d="M251 233C384 181 503 200 636 266C756 326 885 387 1040 380C1134 376 1236 343 1359 276" stroke="url(#routeLine)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="7 15"/>
+  <path d="M428 110C495 173 577 219 674 239C770 258 845 250 931 224" stroke="url(#routeLine)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="7 15"/>
+  <circle cx="249" cy="123" r="10" fill="#2F67F6" fill-opacity="0.12"/>
+  <circle cx="571" cy="152" r="11" fill="#2F67F6" fill-opacity="0.16"/>
+  <circle cx="903" cy="226" r="11" fill="#FF8A2D" fill-opacity="0.16"/>
+  <circle cx="1238" cy="185" r="10" fill="#2F67F6" fill-opacity="0.12"/>
+  <circle cx="1346" cy="294" r="10" fill="#FF8A2D" fill-opacity="0.18"/>
+
+  <g opacity="0.88">
+    <path d="M1112 690C1097 690 1084 700 1080 714L1063 760H1206L1188 712C1184 699 1171 690 1156 690H1112Z" fill="#1B3E89"/>
+    <rect x="1084" y="650" width="100" height="55" rx="14" fill="#2F67F6"/>
+    <rect x="1095" y="661" width="78" height="26" rx="8" fill="#DCEBFF"/>
+    <rect x="1097" y="698" width="30" height="8" rx="4" fill="#C5D8FF"/>
+    <rect x="1139" y="698" width="32" height="8" rx="4" fill="#C5D8FF"/>
+    <circle cx="1100" cy="759" r="14" fill="#0E234C"/>
+    <circle cx="1168" cy="759" r="14" fill="#0E234C"/>
+    <circle cx="1100" cy="759" r="6" fill="#DCEBFF"/>
+    <circle cx="1168" cy="759" r="6" fill="#DCEBFF"/>
+  </g>
+
+  <rect y="0" width="1600" height="960" fill="url(#sky)" fill-opacity="0.08"/>
+</svg>

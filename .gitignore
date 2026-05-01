@@ -1,0 +1,56 @@
+node_modules
+.next
+.env
+.env.local
+.env.production
+.DS_Store
+# dependencies
+node_modules
+
+# next.js
+.next
+out
+
+# environment
+.env
+.env.local
+.env.production
+
+# logs
+*.log
+
+# system
+.DS_Store
+
+# prisma
+prisma/dev.db
+
+# build
+dist
+coverage
+
+# misc
+generated
+touch .gitignore
+open -e .gitignore
+node_modules
+.next
+out
+
+.env
+.env.local
+.env.production
+
+*.log
+
+.DS_Store
+
+prisma/dev.db
+
+dist
+coverage
+
+generated
+ls -a
+touch .gitignore
+

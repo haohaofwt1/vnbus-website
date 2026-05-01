@@ -1,0 +1,67 @@
+import Link from "next/link";
+import { TripStatus } from "@prisma/client";
+import { notFound } from "next/navigation";
+import { ActionMessage } from "@/components/admin/ActionMessage";
+import { RouteForm } from "@/components/admin/RouteForm";
+import { prisma } from "@/lib/prisma";
+
+export default async function EditRoutePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ saved?: string }>;
+}) {
+  const { id } = await params;
+  const query = await searchParams;
+  const [route, cities, tripCount, publicTripCount] = await Promise.all([
+    prisma.route.findUnique({ where: { id } }),
+    prisma.city.findMany({ orderBy: { name: "asc" } }),
+    prisma.trip.count({ where: { routeId: id } }),
+    prisma.trip.count({
+      where: {
+        routeId: id,
+        status: {
+          in: [TripStatus.ACTIVE, TripStatus.SOLD_OUT],
+        },
+      },
+    }),
+  ]);
+
+  if (!route) {
+    notFound();
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="eyebrow">Edit route</p>
+        <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
+          {route.slug}
+        </h1>
+      </div>
+      {query.saved ? (
+        <ActionMessage type="success" message="Route đã được cập nhật." />
+      ) : null}
+      <div className="card-surface flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-ink">
+            Search chỉ hiển thị trip, không hiển thị route trống.
+          </p>
+          <p className="text-sm text-slate-600">
+            Route này hiện có {tripCount} trip, trong đó {publicTripCount} trip đang public
+            (`Active` hoặc `Sold out`). Nếu chưa có trip public thì khách sẽ không tìm thấy
+            tuyến này ở trang search.
+          </p>
+        </div>
+        <Link
+          href={`/admin/trips/new?routeId=${route.id}`}
+          className="inline-flex items-center justify-center rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+        >
+          Create trip for this route
+        </Link>
+      </div>
+      <RouteForm route={route} cities={cities} />
+    </div>
+  );
+}

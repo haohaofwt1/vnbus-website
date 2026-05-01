@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f6f7fb;
+  --foreground: #1d2939;
+  --surface: #ffffff;
+  --muted: #667085;
+  --line: #d0d5dd;
+  --font-heading: "Manrope", "Inter", "Segoe UI", Arial, sans-serif;
+  --font-body: "Inter", "Segoe UI", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(255, 138, 45, 0.08), transparent 24%),
+    radial-gradient(circle at top left, rgba(47, 103, 246, 0.08), transparent 20%),
+    linear-gradient(180deg, #fdfdfc 0%, #f8fafc 36%, #eef3ff 100%);
+  color: var(--foreground);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(47, 103, 246, 0.2);
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.card-surface {
+  @apply rounded-3xl border border-slate-200/70 bg-white shadow-soft;
+}
+
+.section-space {
+  @apply py-14 sm:py-20;
+}
+
+.eyebrow {
+  @apply inline-flex rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-brand-700;
+}
+
+.prose-balance h2,
+.prose-balance h3,
+.prose-balance p {
+  text-wrap: balance;
+}
+
+
+.checkout-input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #1d2939;
+  outline: none;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.checkout-input:focus {
+  border-color: #2f67f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(47, 103, 246, 0.12);
+}
+
+.checkout-primary,
+.checkout-secondary {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.checkout-primary {
+  background: #f97316;
+  color: #ffffff;
+}
+
+.checkout-primary:hover {
+  background: #ea580c;
+}
+
+.checkout-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.checkout-secondary {
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.checkout-secondary:hover {
+  background: #f8fafc;
+}
+
+.checkout-pay-button {
+  min-height: 3.25rem;
+  font-size: 1rem;
+  box-shadow: 0 16px 34px rgba(249, 115, 22, 0.26);
+}
+
+.hero-input,
+.hero-select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #111827;
+  font-size: 0.95rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.hero-select {
+  padding-right: 0.75rem;
+}

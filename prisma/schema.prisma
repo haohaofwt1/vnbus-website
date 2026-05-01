@@ -1,0 +1,403 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  OPERATOR
+  CUSTOMER
+}
+
+enum EntityStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum TripStatus {
+  ACTIVE
+  SOLD_OUT
+  CANCELLED
+  DRAFT
+}
+
+enum BookingStatus {
+  NEW
+  CONTACTED
+  PENDING_PAYMENT
+  PAID
+  FAILED
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+  COMPLETED
+}
+
+enum PaymentProvider {
+  STRIPE
+  VNPAY
+  MOMO
+  PAYPAL
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED_AMOUNT
+}
+
+enum PromotionStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  PENDING
+  HIDDEN
+}
+
+enum FAQStatus {
+  PUBLISHED
+  DRAFT
+}
+
+enum ContentStatus {
+  PUBLISHED
+  DRAFT
+}
+
+enum LeadActivityType {
+  NOTE
+  CALL
+  EMAIL
+  STATUS_CHANGE
+  PAYMENT_UPDATE
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  passwordHash   String?
+  role           UserRole       @default(STAFF)
+  leadActivities LeadActivity[]
+  auditLogs      AuditLog[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model City {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  country        String
+  region         String
+  description    String
+  imageUrl       String
+  seoTitle       String
+  seoDescription String
+  fromRoutes     Route[]  @relation("RouteFromCity")
+  toRoutes       Route[]  @relation("RouteToCity")
+  faqs           FAQ[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Route {
+  id                String         @id @default(cuid())
+  slug              String         @unique
+  fromCityId        String
+  toCityId          String
+  countryFrom       String
+  countryTo         String
+  isInternational   Boolean        @default(false)
+  distanceKm        Int
+  estimatedDuration String
+  priceFrom         Int
+  currency          String
+  shortDescription  String
+  longDescription   String
+  seoTitle          String
+  seoDescription    String
+  status            EntityStatus   @default(DRAFT)
+  fromCity          City           @relation("RouteFromCity", fields: [fromCityId], references: [id])
+  toCity            City           @relation("RouteToCity", fields: [toCityId], references: [id])
+  trips             Trip[]
+  faqs              FAQ[]
+  reviews           Review[]
+  bookingRequests   BookingRequest[]
+  promotions        Promotion[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([fromCityId])
+  @@index([toCityId])
+}
+
+model Operator {
+  id           String       @id @default(cuid())
+  name         String
+  slug         String       @unique
+  logoUrl      String
+  description  String
+  rating       Float        @default(4.5)
+  verified     Boolean      @default(false)
+  contactEmail String
+  contactPhone String
+  website      String
+  status       EntityStatus @default(DRAFT)
+  trips        Trip[]
+  reviews      Review[]
+  faqs         FAQ[]
+  promotions   Promotion[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model VehicleType {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  description       String
+  passengerCapacity Int
+  amenities         String[]
+  trips             Trip[]
+  promotions        Promotion[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Trip {
+  id             String      @id @default(cuid())
+  routeId        String
+  operatorId     String
+  vehicleTypeId  String
+  departureTime  DateTime
+  arrivalTime    DateTime
+  duration       Int
+  price          Int
+  currency       String
+  pickupPoint    String
+  dropoffPoint   String
+  availableSeats Int
+  amenities      String[]
+  status         TripStatus  @default(ACTIVE)
+  route          Route       @relation(fields: [routeId], references: [id])
+  operator       Operator    @relation(fields: [operatorId], references: [id])
+  vehicleType    VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  bookingRequests BookingRequest[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([routeId])
+  @@index([operatorId])
+  @@index([vehicleTypeId])
+}
+
+model BookingRequest {
+  id             String        @id @default(cuid())
+  routeId        String?
+  tripId         String?
+  fromCity       String
+  toCity         String
+  departureDate  DateTime
+  returnDate     DateTime?
+  passengerCount Int
+  vehicleType    String
+  customerName   String
+  customerEmail  String
+  customerPhone  String
+  whatsapp       String?
+  notes          String?
+  status         BookingStatus @default(NEW)
+  source         String
+  originalAmount Int?
+  discountCode   String?
+  discountAmount Int?
+  totalAmount    Int?
+  currency       String?
+  reviewToken    String?       @unique
+  reviewInvitedAt DateTime?
+  reviewSubmittedAt DateTime?
+  route          Route?        @relation(fields: [routeId], references: [id])
+  trip           Trip?         @relation(fields: [tripId], references: [id])
+  review         Review?
+  leadActivities LeadActivity[]
+  payments       Payment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Promotion {
+  id               String          @id @default(cuid())
+  code             String          @unique
+  name             String
+  type             DiscountType
+  value            Int
+  currency         String          @default("VND")
+  status           PromotionStatus @default(ACTIVE)
+  minimumAmount    Int?
+  maxRedemptions   Int?
+  perCustomerLimit Int?
+  startsAt         DateTime?
+  endsAt           DateTime?
+  routeId          String?
+  operatorId       String?
+  vehicleTypeId    String?
+  internalNote     String?
+  route            Route?          @relation(fields: [routeId], references: [id])
+  operator         Operator?       @relation(fields: [operatorId], references: [id])
+  vehicleType      VehicleType?    @relation(fields: [vehicleTypeId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([status])
+  @@index([startsAt])
+  @@index([endsAt])
+  @@index([routeId])
+  @@index([operatorId])
+  @@index([vehicleTypeId])
+}
+
+model Payment {
+  id                        String          @id @default(cuid())
+  bookingRequestId          String
+  provider                  PaymentProvider
+  providerCheckoutSessionId String?
+  providerPaymentIntentId   String?
+  amount                    Int
+  currency                  String
+  status                    PaymentStatus   @default(PENDING)
+  paidAt                    DateTime?
+  refundedAt                DateTime?
+  bookingRequest            BookingRequest  @relation(fields: [bookingRequestId], references: [id])
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+
+  @@index([bookingRequestId])
+  @@index([status])
+}
+
+model Review {
+  id           String        @id @default(cuid())
+  bookingRequestId String?   @unique
+  operatorId   String?
+  routeId      String?
+  customerName String
+  rating       Int
+  comment      String
+  status       ReviewStatus  @default(PUBLISHED)
+  bookingRequest BookingRequest? @relation(fields: [bookingRequestId], references: [id])
+  operator     Operator?     @relation(fields: [operatorId], references: [id])
+  route        Route?        @relation(fields: [routeId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([bookingRequestId])
+  @@index([operatorId])
+  @@index([routeId])
+}
+
+model FAQ {
+  id          String     @id @default(cuid())
+  question    String
+  answer      String
+  category    String
+  routeId     String?
+  cityId      String?
+  operatorId  String?
+  sortOrder   Int        @default(0)
+  status      FAQStatus  @default(DRAFT)
+  route       Route?     @relation(fields: [routeId], references: [id])
+  city        City?      @relation(fields: [cityId], references: [id])
+  operator    Operator?  @relation(fields: [operatorId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([routeId])
+  @@index([cityId])
+  @@index([operatorId])
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  title          String
+  slug           String        @unique
+  excerpt        String
+  content        String
+  coverImageUrl  String
+  authorName     String
+  seoTitle       String
+  seoDescription String
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Page {
+  id             String        @id @default(cuid())
+  title          String
+  slug           String        @unique
+  content        String
+  seoTitle       String
+  seoDescription String
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model LeadActivity {
+  id               String           @id @default(cuid())
+  bookingRequestId String
+  userId           String?
+  type             LeadActivityType
+  note             String
+  bookingRequest   BookingRequest   @relation(fields: [bookingRequestId], references: [id])
+  user             User?            @relation(fields: [userId], references: [id])
+  createdAt        DateTime         @default(now())
+
+  @@index([bookingRequestId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  entityType String
+  entityId   String
+  action     String
+  metadata   Json?
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
