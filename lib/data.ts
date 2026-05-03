@@ -5,9 +5,9 @@ import {
   FAQStatus,
   PaymentStatus,
   PromotionStatus,
+  Prisma,
   ReviewStatus,
   TripStatus,
-  type Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -36,6 +36,128 @@ export type SearchFilters = {
   amenities?: string | string[];
   maxPrice?: string;
 };
+
+function isMissingSearchQueryLogTable(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2021" || error.code === "P2022")
+  );
+}
+
+function hasSearchIntent(filters: SearchFilters) {
+  return Boolean(filters.from || filters.to || filters.vehicleType || filters.smart);
+}
+
+export async function recordSearchQuery(filters: SearchFilters) {
+  if (!hasSearchIntent(filters)) {
+    return;
+  }
+
+  try {
+    await prisma.searchQueryLog.create({
+      data: {
+        fromSlug: filters.from || null,
+        toSlug: filters.to || null,
+        vehicleSlug: filters.vehicleType || null,
+        smart: filters.smart || null,
+        departureDate: filters.departureDate ? new Date(filters.departureDate) : null,
+        passengerCount: filters.passengers ? Math.max(1, Math.round(Number(filters.passengers)) || 1) : null,
+      },
+    });
+  } catch (error) {
+    if (!isMissingSearchQueryLogTable(error) && process.env.NODE_ENV !== "production") {
+      console.warn("Failed to record search query.", error);
+    }
+  }
+}
+
+export async function getPopularSearchesFromDatabase(limit = 6) {
+  try {
+    const logs = await prisma.searchQueryLog.findMany({
+      where: {
+        OR: [{ fromSlug: { not: null } }, { toSlug: { not: null } }, { vehicleSlug: { not: null } }, { smart: { not: null } }],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 500,
+    });
+    const cities = await prisma.city.findMany({
+      where: {
+        slug: {
+          in: Array.from(new Set(logs.flatMap((log) => [log.fromSlug, log.toSlug]).filter(Boolean) as string[])),
+        },
+      },
+      select: { slug: true, name: true },
+    });
+    const cityNames = new Map(cities.map((city) => [city.slug, city.name]));
+    const grouped = new Map<string, { label: string; href: string; count: number; lastSeen: number }>();
+
+    logs.forEach((log) => {
+      const params = new URLSearchParams();
+      if (log.fromSlug) params.set("from", log.fromSlug);
+      if (log.toSlug) params.set("to", log.toSlug);
+      if (log.vehicleSlug) params.set("vehicleType", log.vehicleSlug);
+      if (log.smart && log.smart !== "recommended") params.set("smart", log.smart);
+      const href = `/search?${params.toString()}`;
+      if (href === "/search?") return;
+      const label =
+        log.fromSlug && log.toSlug
+          ? `${cityNames.get(log.fromSlug) ?? log.fromSlug} -> ${cityNames.get(log.toSlug) ?? log.toSlug}`
+          : log.vehicleSlug
+            ? `Vehicle: ${log.vehicleSlug.replaceAll("-", " ")}`
+            : log.smart
+              ? `Travel style: ${log.smart}`
+              : "Popular search";
+      const current = grouped.get(href);
+      grouped.set(href, {
+        label,
+        href,
+        count: (current?.count ?? 0) + 1,
+        lastSeen: Math.max(current?.lastSeen ?? 0, log.createdAt.getTime()),
+      });
+    });
+
+    return [...grouped.values()]
+      .sort((left, right) => right.count - left.count || right.lastSeen - left.lastSeen)
+      .slice(0, limit);
+  } catch (error) {
+    if (!isMissingSearchQueryLogTable(error) && process.env.NODE_ENV !== "production") {
+      console.warn("Failed to load popular searches.", error);
+    }
+
+    return [];
+  }
+}
+
+export async function getFallbackPopularRouteSearches(limit = 6) {
+  const routes = await prisma.route.findMany({
+    where: { status: EntityStatus.ACTIVE },
+    include: {
+      fromCity: true,
+      toCity: true,
+      _count: { select: { bookingRequests: true, trips: true } },
+    },
+    orderBy: [{ updatedAt: "desc" }],
+    take: 50,
+  });
+
+  return routes
+    .sort((left, right) => right._count.bookingRequests - left._count.bookingRequests || right._count.trips - left._count.trips)
+    .slice(0, limit)
+    .map((route) => ({
+      label: `${route.fromCity.name} -> ${route.toCity.name}`,
+      href: `/search?from=${route.fromCity.slug}&to=${route.toCity.slug}`,
+      count: route._count.bookingRequests,
+    }));
+}
+
+export async function getHomepagePopularSearches(limit = 6) {
+  const popularSearches = await getPopularSearchesFromDatabase(limit);
+  if (popularSearches.length) {
+    return popularSearches;
+  }
+
+  return getFallbackPopularRouteSearches(limit);
+}
 
 export async function getSearchFormOptions() {
   const [cities, vehicleTypes, popularRoutes] = await Promise.all([

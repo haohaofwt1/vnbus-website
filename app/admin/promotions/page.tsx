@@ -80,6 +80,7 @@ export default async function AdminPromotionsPage({
     groupBy?: string;
     bulkDeleted?: string;
     bulkError?: string;
+    error?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -119,6 +120,7 @@ export default async function AdminPromotionsPage({
         description="Create controlled discounts, scope them to routes/operators/vehicles, and manage campaign status."
       />
 
+      {params.error ? <ActionMessage type="error" message={decodeURIComponent(params.error)} /> : null}
       {params.saved ? <ActionMessage type="success" message="Promotion settings saved." /> : null}
       <AdminBulkResultMessage
         deleted={params.bulkDeleted}

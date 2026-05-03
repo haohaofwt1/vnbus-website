@@ -3,7 +3,7 @@ import { FilterSidebar } from "@/components/FilterSidebar";
 import { SearchSummaryBar } from "@/components/SearchSummaryBar";
 import { SmartRecommendationTabs } from "@/components/SmartRecommendationTabs";
 import { TripCard } from "@/components/TripCard";
-import { getSearchFormOptions, searchTrips, type SearchFilters } from "@/lib/data";
+import { getSearchFormOptions, recordSearchQuery, searchTrips, type SearchFilters } from "@/lib/data";
 import { resolveLocale } from "@/lib/i18n";
 import { buildItemListSchema } from "@/lib/schema";
 import { buildMetadata } from "@/lib/seo";
@@ -45,6 +45,7 @@ export default async function SearchPage({
     getSearchFormOptions(),
     searchTrips(filters),
     getSearchUiLabels(),
+    recordSearchQuery(filters),
   ]);
   const smartMode = resolveSmartMode(filters.smart);
   const rankedTrips = [...results.trips].sort((left, right) => {

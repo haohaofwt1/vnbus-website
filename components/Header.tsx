@@ -4,32 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { BusFront, Globe2, Phone } from "lucide-react";
+import { BusFront, Globe2, Menu, Phone } from "lucide-react";
 import {
   resolveLocale,
+  sharedCopy,
   supportedLocales,
   type Locale,
   withLang,
 } from "@/lib/i18n";
 import type { BrandingSettings } from "@/lib/site-settings";
 
-
-const headerCopy: Record<Locale, {
-  routes: string;
-  vehicles: string;
-  crossBorder: string;
-  guide: string;
-  support: string;
-  myBooking: string;
-  cta: string;
-}> = {
-  en: { routes: "Routes", vehicles: "Vehicles", crossBorder: "Cross-border", guide: "Travel guide", support: "Support", myBooking: "My booking", cta: "Find tickets" },
-  vi: { routes: "Tuyến xe", vehicles: "Loại xe", crossBorder: "Tuyến quốc tế", guide: "Cẩm nang", support: "Hỗ trợ", myBooking: "Vé của tôi", cta: "Tìm vé" },
-  ko: { routes: "노선", vehicles: "차량", crossBorder: "국경 이동", guide: "여행 가이드", support: "지원", myBooking: "내 예약", cta: "티켓 찾기" },
-  ja: { routes: "ルート", vehicles: "車両", crossBorder: "越境", guide: "旅行ガイド", support: "サポート", myBooking: "予約確認", cta: "チケット検索" },
-};
-
-const publicLocaleLabels: Record<Locale, string> = {
+const publicLocaleLabels = {
   en: "EN",
   vi: "VI",
   ko: "KR",
@@ -47,20 +32,20 @@ export function Header({ branding }: { branding?: BrandingSettings | null }) {
   const searchParams = new URLSearchParams(searchString);
   const locale = resolveLocale(searchParams.get("lang"));
   const siteName = branding?.siteName || "VNBus";
-  const copy = headerCopy[locale];
+  const copy = sharedCopy[locale].header;
 
   const navItems = [
-    { href: "/search", label: copy.routes },
-    { href: "/search?vehicleType=limousine-van", label: copy.vehicles },
-    { href: "/search?smart=border", label: copy.crossBorder },
-    { href: "/blog", label: copy.guide },
+    { href: "/routes", label: copy.routes },
+    { href: "/vehicles", label: copy.vehicles },
+    { href: "/operators", label: copy.operators },
+    { href: "/offers", label: copy.offers },
+    { href: "/blog", label: copy.news },
     { href: "/contact", label: copy.support },
-    { href: "/manage-booking", label: copy.myBooking },
   ];
 
   const buildLocaleSwitchHref = (nextLocale: Locale) => {
     const params = new URLSearchParams(searchString);
-    if (nextLocale === "en") {
+    if (nextLocale === "vi") {
       params.delete("lang");
     } else {
       params.set("lang", nextLocale);
@@ -70,15 +55,15 @@ export function Header({ branding }: { branding?: BrandingSettings | null }) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#061735]/95 text-white backdrop-blur-xl">
-      <div className="container-shell flex min-h-[72px] items-center justify-between gap-4 py-3">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#061735] text-white shadow-[0_8px_26px_rgba(2,8,23,.18)]">
+      <div className="container-shell flex min-h-[64px] items-center justify-between gap-3 py-2">
         <Link href={withLang("/", locale)} className="flex items-center gap-3">
           {branding?.logoUrl ? (
-            <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-white">
-              <Image src={branding.logoUrl} alt={branding.logoAlt || siteName} fill className="object-cover" sizes="44px" />
+            <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white">
+              <Image src={branding.logoUrl} alt={branding.logoAlt || siteName} fill className="object-cover" sizes="40px" />
             </span>
           ) : (
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#08204a]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#08204a]">
               <BusFront className="h-6 w-6" />
             </span>
           )}
@@ -87,20 +72,20 @@ export function Header({ branding }: { branding?: BrandingSettings | null }) {
               {siteName}
             </span>
             <span className="mt-1 block text-[11px] font-semibold text-blue-100/80">
-              VietNamBus.Com.Vn
+              {copy.tagline}
             </span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-bold text-blue-100/90 lg:flex">
+        <nav className="hidden items-center gap-5 text-sm font-bold text-blue-100/90 lg:flex xl:gap-6">
           {navItems.map((item) => (
-            <Link key={item.href} href={withLang(item.href, locale)} className="transition hover:text-white">
+            <Link key={item.href} href={withLang(item.href, locale)} className="whitespace-nowrap transition hover:text-white">
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2">
           <div className="hidden items-center gap-1 rounded-xl border border-white/15 bg-white/5 p-1 md:flex">
             <Globe2 className="ml-2 h-4 w-4 text-blue-100/80" />
             {supportedLocales.map((item) => (
@@ -125,11 +110,36 @@ export function Header({ branding }: { branding?: BrandingSettings | null }) {
           </Link>
 
           <Link
+            href={withLang("/admin/login", locale)}
+            className="hidden whitespace-nowrap rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10 xl:inline-flex"
+          >
+            {copy.loginRegister}
+          </Link>
+
+          <Link
             href={withLang("/search", locale)}
-            className="inline-flex rounded-xl bg-accent-500 px-4 py-3 text-sm font-black text-white shadow-[0_14px_30px_rgba(249,115,22,0.32)] transition hover:bg-accent-600 sm:px-5"
+            className="inline-flex rounded-xl bg-accent-500 px-4 py-2.5 text-sm font-black text-white shadow-[0_14px_30px_rgba(249,115,22,0.32)] transition hover:bg-accent-600 sm:px-5"
           >
             {copy.cta}
           </Link>
+
+          <details className="group relative lg:hidden">
+            <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-white/15 bg-white/5">
+              <Menu className="h-5 w-5" />
+            </summary>
+            <div className="absolute right-0 top-12 w-64 rounded-2xl border border-white/10 bg-[#061735] p-3 shadow-2xl">
+              <nav className="grid gap-1">
+                {navItems.map((item) => (
+                  <Link key={item.href} href={withLang(item.href, locale)} className="rounded-xl px-3 py-2 text-sm font-bold text-blue-50 hover:bg-white/10">
+                    {item.label}
+                  </Link>
+                ))}
+                <Link href={withLang("/admin/login", locale)} className="rounded-xl px-3 py-2 text-sm font-bold text-blue-50 hover:bg-white/10">
+                  {copy.loginRegister}
+                </Link>
+              </nav>
+            </div>
+          </details>
         </div>
       </div>
     </header>

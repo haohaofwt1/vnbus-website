@@ -247,6 +247,22 @@ model BookingRequest {
   @@index([createdAt])
 }
 
+model SearchQueryLog {
+  id            String   @id @default(cuid())
+  fromSlug      String?
+  toSlug        String?
+  vehicleSlug   String?
+  smart         String?
+  departureDate DateTime?
+  passengerCount Int?
+  createdAt     DateTime @default(now())
+
+  @@index([fromSlug, toSlug])
+  @@index([vehicleSlug])
+  @@index([smart])
+  @@index([createdAt])
+}
+
 model Promotion {
   id               String          @id @default(cuid())
   code             String          @unique

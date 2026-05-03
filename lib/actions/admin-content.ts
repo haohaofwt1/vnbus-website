@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import {
   BRANDING_SETTING_KEY,
+  FOOTER_SETTING_KEY,
+  HOMEPAGE_SETTING_KEY,
   SEARCH_UI_LABELS_SETTING_KEY,
   type LocaleMap,
 } from "@/lib/site-settings";
@@ -185,4 +187,138 @@ export async function updateSearchUiLabelsAction(formData: FormData) {
   revalidatePath("/search");
   revalidatePath("/admin/content");
   redirect("/admin/content?labelsSaved=1");
+}
+
+function readRows(formData: FormData, prefix: string, fields: string[], count: number) {
+  return Array.from({ length: count }, (_, index) =>
+    Object.fromEntries(
+      fields.map((field) => [field, formData.get(`${prefix}_${index}_${field}`)?.toString().trim() ?? ""]),
+    ),
+  ).filter((row) => Object.values(row).some(Boolean));
+}
+
+function readFooterLinks(formData: FormData, groupIndex: number) {
+  return Array.from({ length: 5 }, (_, index) => ({
+    label: formData.get(`footer_group_${groupIndex}_link_${index}_label`)?.toString().trim() ?? "",
+    href: formData.get(`footer_group_${groupIndex}_link_${index}_href`)?.toString().trim() ?? "",
+  })).filter((link) => link.label && link.href);
+}
+
+export async function updateFooterSettingsAction(formData: FormData) {
+  const session = await requireAdminUser();
+  const value = {
+    description: formData.get("footer_description")?.toString().trim() ?? "",
+    phoneNumbers: Array.from({ length: 3 }, (_, index) => formData.get(`footer_phone_${index}`)?.toString().trim() ?? "").filter(Boolean),
+    socialLinks: Array.from({ length: 3 }, (_, index) => {
+      const type = formData.get(`footer_social_${index}_type`)?.toString().trim();
+      return {
+        label: formData.get(`footer_social_${index}_label`)?.toString().trim() ?? "",
+        href: formData.get(`footer_social_${index}_href`)?.toString().trim() ?? "",
+        type: type === "facebook" ? "facebook" : "message",
+      };
+    }).filter((item) => item.label && item.href),
+    groups: Array.from({ length: 3 }, (_, index) => ({
+      title: formData.get(`footer_group_${index}_title`)?.toString().trim() ?? "",
+      links: readFooterLinks(formData, index),
+    })).filter((group) => group.title && group.links.length),
+    copyright: formData.get("footer_copyright")?.toString().trim() ?? "",
+    tagline: formData.get("footer_tagline")?.toString().trim() ?? "",
+  };
+
+  try {
+    const setting = await prisma.siteSetting.upsert({
+      where: { key: FOOTER_SETTING_KEY },
+      update: { value },
+      create: { key: FOOTER_SETTING_KEY, value },
+    });
+
+    await createAuditLog({
+      userId: session.id,
+      entityType: "SiteSetting",
+      entityId: setting.id,
+      action: "UPDATE_FOOTER",
+      metadata: { key: FOOTER_SETTING_KEY },
+    });
+  } catch (error) {
+    if (isMissingSiteSettingTable(error)) {
+      redirect("/admin/content?error=migrate-site-settings");
+    }
+
+    console.error("Failed to update footer settings.", error);
+    redirect("/admin/content?error=footer-save-failed");
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/content");
+  redirect("/admin/content?footerSaved=1");
+}
+
+export async function updateHomepageSettingsAction(formData: FormData) {
+  const session = await requireAdminUser();
+  const value = {
+    hero: {
+      badge: formData.get("hero_badge")?.toString().trim() ?? "",
+      titlePrefix: formData.get("hero_titlePrefix")?.toString().trim() ?? "",
+      titleAccent: formData.get("hero_titleAccent")?.toString().trim() ?? "",
+      titleSuffix: formData.get("hero_titleSuffix")?.toString().trim() ?? "",
+      body: formData.get("hero_body")?.toString().trim() ?? "",
+      popularSearchesLabel: formData.get("hero_popularSearchesLabel")?.toString().trim() ?? "",
+      stats: readRows(formData, "hero_stats", ["value", "label"], 4),
+      popularSearches: readRows(formData, "hero_popularSearches", ["label", "href"], 6),
+    },
+    styleSection: {
+      eyebrow: formData.get("style_eyebrow")?.toString().trim() ?? "",
+      title: formData.get("style_title")?.toString().trim() ?? "",
+      action: formData.get("style_action")?.toString().trim() ?? "",
+      href: formData.get("style_href")?.toString().trim() ?? "/search",
+      cards: readRows(formData, "style_cards", ["title", "body", "vehicle", "smart"], 6),
+    },
+    borderSection: {
+      eyebrow: formData.get("border_eyebrow")?.toString().trim() ?? "",
+      title: formData.get("border_title")?.toString().trim() ?? "",
+      action: formData.get("border_action")?.toString().trim() ?? "",
+      href: formData.get("border_href")?.toString().trim() ?? "/search?smart=border",
+      routes: readRows(formData, "border_routes", ["from", "to", "wait", "vehicle"], 6),
+      map: {
+        eyebrow: formData.get("map_eyebrow")?.toString().trim() ?? "",
+        title: formData.get("map_title")?.toString().trim() ?? "",
+        status: formData.get("map_status")?.toString().trim() ?? "",
+        confidenceLabel: formData.get("map_confidenceLabel")?.toString().trim() ?? "",
+        confidenceValue: formData.get("map_confidenceValue")?.toString().trim() ?? "",
+        waitLabel: formData.get("map_waitLabel")?.toString().trim() ?? "",
+        waitValue: formData.get("map_waitValue")?.toString().trim() ?? "",
+        supportLabel: formData.get("map_supportLabel")?.toString().trim() ?? "",
+        supportValue: formData.get("map_supportValue")?.toString().trim() ?? "",
+        lanes: readRows(formData, "map_lanes", ["label", "value"], 3),
+        notes: readRows(formData, "map_notes", ["value"], 4).map((row) => row.value),
+      },
+    },
+  };
+
+  try {
+    const setting = await prisma.siteSetting.upsert({
+      where: { key: HOMEPAGE_SETTING_KEY },
+      update: { value },
+      create: { key: HOMEPAGE_SETTING_KEY, value },
+    });
+
+    await createAuditLog({
+      userId: session.id,
+      entityType: "SiteSetting",
+      entityId: setting.id,
+      action: "UPDATE_HOMEPAGE",
+      metadata: { key: HOMEPAGE_SETTING_KEY },
+    });
+  } catch (error) {
+    if (isMissingSiteSettingTable(error)) {
+      redirect("/admin/content?error=migrate-site-settings");
+    }
+
+    console.error("Failed to update homepage settings.", error);
+    redirect("/admin/content?error=homepage-save-failed");
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/content");
+  redirect("/admin/content?homepageSaved=1");
 }

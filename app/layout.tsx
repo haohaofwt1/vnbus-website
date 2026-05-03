@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { PublicChrome } from "@/components/PublicChrome";
 import { buildMetadata, siteConfig } from "@/lib/seo";
-import { getBrandingSettings } from "@/lib/site-settings";
+import { getBrandingSettings, getFooterSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = buildMetadata({
   title: siteConfig.name,
@@ -18,7 +18,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const branding = await getBrandingSettings();
+  const [branding, footer] = await Promise.all([getBrandingSettings(), getFooterSettings()]);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -29,7 +29,7 @@ export default async function RootLayout({
           </PublicChrome>
           <main className="flex-1">{children}</main>
           <PublicChrome>
-            <Footer />
+            <Footer settings={footer} />
           </PublicChrome>
         </div>
       </body>

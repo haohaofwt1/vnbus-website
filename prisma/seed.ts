@@ -39,6 +39,7 @@ const cities = [
   ["Da Nang", "da-nang", "Vietnam", "Central Coast"],
   ["Hoi An", "hoi-an", "Vietnam", "Central Coast"],
   ["Hue", "hue", "Vietnam", "Central Coast"],
+  ["Phong Nha", "phong-nha", "Vietnam", "Quang Binh"],
   ["Phnom Penh", "phnom-penh", "Cambodia", "Mekong Plains"],
   ["Siem Reap", "siem-reap", "Cambodia", "Northwest"],
   ["Vientiane", "vientiane", "Laos", "Central Laos"],
@@ -143,6 +144,18 @@ const operators = [
     website: "https://heritagelimousine.example",
     status: EntityStatus.ACTIVE,
   },
+  {
+    name: "HK BusLines",
+    slug: "hk-buslines",
+    description:
+      "Daily VIP cabin sleeper service from Hue to Phong Nha with central pickup support, hotline confirmation, and single or double cabin options.",
+    rating: 4.7,
+    verified: true,
+    contactEmail: "booking@vietnambus.com.vn",
+    contactPhone: "0857.05.06.77",
+    website: "https://vietnambus.com.vn/xe-hk-buslines-tu-hue-di-phong-nha-quang-binh/",
+    status: EntityStatus.ACTIVE,
+  },
 ];
 
 const vehicleTypes = [
@@ -185,6 +198,22 @@ const vehicleTypes = [
       "Door-to-door private transport for flexible departure times, direct routing, and extra baggage allowance.",
     passengerCapacity: 6,
     amenities: ["Private cabin", "Flexible stop", "Bottled water", "Hotel pickup"],
+  },
+  {
+    name: "Cabin Single",
+    slug: "cabin-single",
+    description:
+      "VIP single cabin sleeper option with more privacy than a standard sleeper berth, suitable for solo travelers on central Vietnam routes.",
+    passengerCapacity: 24,
+    amenities: ["Air-conditioning", "Water", "Blanket", "Privacy curtain", "USB charging"],
+  },
+  {
+    name: "Cabin Double",
+    slug: "cabin-double",
+    description:
+      "VIP double cabin sleeper option for two passengers traveling together with shared cabin space and onboard comfort amenities.",
+    passengerCapacity: 24,
+    amenities: ["Air-conditioning", "Water", "Blanket", "Privacy curtain", "USB charging"],
   },
 ];
 
@@ -447,6 +476,61 @@ const routeSpecs = [
       "Hue central office",
       "Perfume River south bank",
       "Hue train station stop",
+    ],
+  },
+  {
+    slug: "hue-to-phong-nha",
+    from: "hue",
+    to: "phong-nha",
+    countryFrom: "Vietnam",
+    countryTo: "Vietnam",
+    isInternational: false,
+    distanceKm: 245,
+    durationMinutes: 225,
+    estimatedDuration: "3h 45m",
+    priceFrom: 350000,
+    currency: "VND",
+    operatorSlugs: [
+      "hk-buslines",
+      "hk-buslines",
+      "hk-buslines",
+      "hk-buslines",
+      "hk-buslines",
+      "hk-buslines",
+      "hk-buslines",
+      "hk-buslines",
+    ],
+    vehicleSlugs: [
+      "cabin-single",
+      "cabin-double",
+      "cabin-single",
+      "cabin-double",
+      "cabin-single",
+      "cabin-double",
+      "cabin-single",
+      "cabin-double",
+    ],
+    departureSlots: ["09:30", "09:30", "17:15", "17:15", "19:30", "19:30", "20:30", "20:30"],
+    tripPrices: [350000, 550000, 350000, 550000, 350000, 550000, 350000, 550000],
+    pickupPoints: [
+      "Hue city center meeting point",
+      "Hue city center meeting point",
+      "Hue city center meeting point",
+      "Hue city center meeting point",
+      "Hue city center meeting point",
+      "Hue city center meeting point",
+      "Hue city center meeting point",
+      "Hue city center meeting point",
+    ],
+    dropoffPoints: [
+      "Phong Nha central drop-off",
+      "Phong Nha central drop-off",
+      "Phong Nha central drop-off",
+      "Phong Nha central drop-off",
+      "Phong Nha central drop-off",
+      "Phong Nha central drop-off",
+      "Phong Nha central drop-off",
+      "Phong Nha central drop-off",
     ],
   },
   {
@@ -798,7 +882,10 @@ async function main() {
       const arrivalTime = addMinutes(departureTime, route.durationMinutes);
       const multiplier = priceMultiplier[vehicle.slug] ?? 1;
       const surcharge = route.currency === "VND" ? index * 10000 : index * 2;
-      const amount = Math.round(route.priceFrom * multiplier + surcharge);
+      const amount =
+        "tripPrices" in route
+          ? route.tripPrices[index % route.tripPrices.length]
+          : Math.round(route.priceFrom * multiplier + surcharge);
       const seatsLeft = Math.max(2, vehicle.passengerCapacity - 2 - index * 3);
 
       const trip = await prisma.trip.create({

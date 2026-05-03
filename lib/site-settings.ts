@@ -3,9 +3,13 @@ import { prisma } from "@/lib/prisma";
 export * from "@/lib/site-settings-defaults";
 import {
   BRANDING_SETTING_KEY,
+  FOOTER_SETTING_KEY,
   defaultBrandingSettings,
+  defaultFooterSettings,
+  defaultHomepageSettings,
   defaultPaymentSettings,
   defaultSearchUiLabels,
+  HOMEPAGE_SETTING_KEY,
   PAYMENT_SETTING_KEY,
   SEARCH_UI_LABELS_SETTING_KEY,
 } from "@/lib/site-settings-defaults";
@@ -64,6 +68,14 @@ export const getBrandingSettings = cache(async () =>
 
 export const getSearchUiLabels = cache(async () =>
   getSettingValue(SEARCH_UI_LABELS_SETTING_KEY, defaultSearchUiLabels),
+);
+
+export const getHomepageSettings = cache(async () =>
+  getSettingValue(HOMEPAGE_SETTING_KEY, defaultHomepageSettings),
+);
+
+export const getFooterSettings = cache(async () =>
+  getSettingValue(FOOTER_SETTING_KEY, defaultFooterSettings),
 );
 
 export const getPaymentSettings = cache(async () =>

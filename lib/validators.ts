@@ -118,6 +118,14 @@ export const adminOperatorSchema = z.object({
   status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]),
 });
 
+export const adminVehicleTypeSchema = z.object({
+  name: z.string().trim().min(2),
+  slug: z.string().trim().min(2),
+  description: z.string().trim().min(12),
+  passengerCapacity: z.coerce.number().int().min(1),
+  amenities: stringListSchema,
+});
+
 export const adminCitySchema = z.object({
   name: z.string().trim().min(2),
   slug: z.string().trim().min(2),
@@ -203,7 +211,7 @@ export const adminPromotionSchema = z
     code: z
       .string()
       .trim()
-      .min(3)
+      .min(2)
       .max(32)
       .transform((value) => value.toUpperCase().replace(/\s+/g, "")),
     name: z.string().trim().min(3),

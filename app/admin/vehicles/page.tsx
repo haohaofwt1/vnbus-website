@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import Link from "next/link";
 import { AdminBulkDeleteBar } from "@/components/admin/AdminBulkDeleteBar";
 import { AdminBulkResultMessage } from "@/components/admin/AdminBulkResultMessage";
 import { AdminListToolbar, AdminMetricCard, AdminModuleHeader } from "@/components/admin/AdminModuleChrome";
@@ -31,6 +32,7 @@ export default async function AdminVehiclesPage({ searchParams }: { searchParams
         eyebrow="Inventory"
         title="Vehicles"
         description="Review vehicle and seat categories used by trips, promotions and checkout filtering."
+        primaryAction={{ href: "/admin/vehicles/new", label: "New vehicle type" }}
         secondaryAction={{ href: "/admin/trips/new", label: "Create trip" }}
       />
       <AdminBulkResultMessage deleted={params.bulkDeleted} error={params.bulkError} label="vehicle type" />
@@ -50,12 +52,13 @@ export default async function AdminVehiclesPage({ searchParams }: { searchParams
       />
       <AdminBulkDeleteBar entity="vehicles" entityLabel="vehicle type" selectionName="vehicleIds" totalOnPage={vehicleTypes.length} returnTo={returnTo} />
       <DataTable
-        columns={[{ key: "vehicle", label: "Vehicle type" }, { key: "capacity", label: "Capacity" }, { key: "amenities", label: "Amenities" }, { key: "usage", label: "Usage" }]}
+        columns={[{ key: "vehicle", label: "Vehicle type" }, { key: "capacity", label: "Capacity" }, { key: "amenities", label: "Amenities" }, { key: "usage", label: "Usage" }, { key: "action", label: "Action", align: "right" }]}
         rows={vehicleTypes.map((vehicle) => ({
           vehicle: <div><p className="font-black text-ink">{vehicle.name}</p><p className="text-slate-500">{vehicle.slug}</p><p className="mt-1 max-w-xl text-xs leading-5 text-slate-500">{vehicle.description}</p></div>,
           capacity: `${vehicle.passengerCapacity} pax`,
           amenities: <div className="flex max-w-md flex-wrap gap-1.5">{vehicle.amenities.map((amenity) => <span key={amenity} className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{amenity}</span>)}</div>,
           usage: `${vehicle._count.trips} trips · ${vehicle._count.promotions} promos`,
+          action: <Link href={`/admin/vehicles/${vehicle.id}/edit`} className="font-black text-brand-700">Edit</Link>,
         }))}
         emptyMessage="No vehicle types found."
         selectionName="vehicleIds"
