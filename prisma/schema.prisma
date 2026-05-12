@@ -131,6 +131,7 @@ model Route {
   estimatedDuration String
   priceFrom         Int
   currency          String
+  imageUrl          String         @default("")
   shortDescription  String
   longDescription   String
   seoTitle          String
@@ -175,6 +176,13 @@ model VehicleType {
   name              String
   slug              String   @unique
   description       String
+  subtitle          String   @default("")
+  bestFor           String   @default("")
+  imageUrl          String   @default("")
+  featuredImageUrl  String   @default("")
+  privacyScore      Int      @default(0)
+  comfortScore      Int      @default(0)
+  valueScore        Int      @default(0)
   passengerCapacity Int
   amenities         String[]
   trips             Trip[]

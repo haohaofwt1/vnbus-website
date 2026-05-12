@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
-import { HeroSearch, HomepageSectionRenderer } from "@/components/home/HomepageMarketplace";
-import { getHomepageSections } from "@/lib/homepage.config";
-import { getHomepageData } from "@/lib/homepage-data";
-import { resolveLocale } from "@/lib/i18n";
+import { AICopilotSection } from "@/components/home/AICopilotSection";
+import {
+  IntentSection,
+  MarketplaceCompactGrid,
+  RecommendedTrips,
+} from "@/components/home/FutureHomeSections";
+import { HeroTravelConsole } from "@/components/home/HeroTravelConsole";
+import { getHomepagePopularSearches } from "@/lib/data";
+import { getFutureHomeData } from "@/lib/future-home-data";
+import { resolveLocale, withLang } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Đặt vé xe khách toàn quốc | VNBus",
@@ -19,13 +25,27 @@ export default async function HomePage({
 }) {
   const params = await searchParams;
   const locale = resolveLocale(params.lang);
-  const data = await getHomepageData(locale);
-  const sections = getHomepageSections(locale);
+  const [data, popularSearches] = await Promise.all([
+    getFutureHomeData(),
+    getHomepagePopularSearches(3),
+  ]);
 
   return (
-    <>
-      <HeroSearch data={data.formOptions} heroImage={data.config.heroImage} locale={locale} />
-      <HomepageSectionRenderer sections={sections} data={data} locale={locale} />
-    </>
+    <div className="bg-[#F6F9FC]">
+      <HeroTravelConsole
+        locations={data.locations}
+        vehicleOptions={data.vehicleOptions}
+        heroImage={data.heroImage}
+        locale={locale}
+        popularSearches={popularSearches.map((item) => ({
+          label: item.label.replace(/\s*->\s*/g, " → "),
+          href: withLang(item.href, locale),
+        }))}
+      />
+      <IntentSection items={data.intents} locale={locale} />
+      <RecommendedTrips items={data.featuredTrips} locale={locale} />
+      <MarketplaceCompactGrid vehicles={data.vehicles} operators={data.operators} locale={locale} />
+      <AICopilotSection locale={locale} />
+    </div>
   );
 }

@@ -128,6 +128,15 @@ export function TripConfidenceCard({
       passengers: "Passengers",
       checklistTitle: "Checklist",
       borderTitle: "Border-ready notes",
+      overviewTab: "Overview",
+      scheduleTab: "Schedule",
+      amenitiesTab: "Amenities",
+      policyTab: "Policy",
+      reviewsTab: "Reviews",
+      fitTitle: "Best for",
+      noteTitle: "Watch out",
+      fitItems: ["Families", "Travellers needing privacy", "Budget travellers", "Overnight riders"],
+      noteItems: ["Minor delays can happen", "Pickup point may need confirmation", "Double cabins can be limited"],
       checklist: [
         "Clear pickup point",
         "Manual confirmation before payment",
@@ -185,6 +194,15 @@ export function TripConfidenceCard({
       passengers: "Số khách",
       checklistTitle: "Checklist",
       borderTitle: "Ghi chú qua biên giới",
+      overviewTab: "Tổng quan",
+      scheduleTab: "Lịch trình",
+      amenitiesTab: "Tiện ích",
+      policyTab: "Chính sách hủy/đổi",
+      reviewsTab: "Đánh giá",
+      fitTitle: "Phù hợp với ai?",
+      noteTitle: "Cần lưu ý",
+      fitItems: ["Gia đình", "Người cần riêng tư", "Người muốn tiết kiệm", "Người đi đêm"],
+      noteItems: ["Có thể delay nhẹ", "Điểm đón cần xác nhận", "Số lượng cabin đôi hạn chế"],
       checklist: [
         "Điểm đón rõ ràng",
         "Xác nhận thủ công trước khi thanh toán",
@@ -242,6 +260,15 @@ export function TripConfidenceCard({
       passengers: "탑승객",
       checklistTitle: "체크리스트",
       borderTitle: "국경 간 메모",
+      overviewTab: "개요",
+      scheduleTab: "일정",
+      amenitiesTab: "편의시설",
+      policyTab: "취소/변경",
+      reviewsTab: "리뷰",
+      fitTitle: "추천 대상",
+      noteTitle: "주의 사항",
+      fitItems: ["가족", "프라이버시가 필요한 여행자", "예산 중시 여행자", "야간 이동"],
+      noteItems: ["지연 가능성 있음", "픽업 위치 확인 필요", "더블 캐빈은 제한적일 수 있음"],
       checklist: [
         "명확한 탑승 위치",
         "결제 전 수동 확인",
@@ -299,6 +326,15 @@ export function TripConfidenceCard({
       passengers: "人数",
       checklistTitle: "チェックリスト",
       borderTitle: "越境メモ",
+      overviewTab: "概要",
+      scheduleTab: "旅程",
+      amenitiesTab: "設備",
+      policyTab: "取消・変更",
+      reviewsTab: "レビュー",
+      fitTitle: "向いている人",
+      noteTitle: "注意点",
+      fitItems: ["家族", "プライバシー重視", "節約したい人", "夜行移動"],
+      noteItems: ["遅延の可能性あり", "乗車場所の確認が必要", "ダブルキャビンは限りあり"],
       checklist: [
         "明確な乗車場所",
         "支払い前の手動確認",
@@ -329,7 +365,7 @@ export function TripConfidenceCard({
   const luggageNote = comfortScore >= 4 ? copy.luggagePremium : copy.luggageStandard;
 
   return (
-    <div className="mt-5 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -376,6 +412,39 @@ export function TripConfidenceCard({
             </Link>
           ) : null}
         </div>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2 border-b border-slate-200 pb-4">
+        {[copy.overviewTab, copy.scheduleTab, copy.amenitiesTab, copy.policyTab, copy.reviewsTab].map((tab, index) => (
+          <span
+            key={tab}
+            className={`rounded-full px-4 py-2 text-sm font-black ${
+              index === 0 ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {tab}
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <InfoBlock icon={<Sparkles className="h-4 w-4" />} title={copy.fitTitle}>
+          <div className="flex flex-wrap gap-2">
+            {copy.fitItems.map((item) => (
+              <span key={item} className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-black text-brand-700">
+                {item}
+              </span>
+            ))}
+          </div>
+        </InfoBlock>
+        <InfoBlock icon={<ShieldCheck className="h-4 w-4" />} title={copy.noteTitle}>
+          {copy.noteItems.map((item) => (
+            <p key={item} className="flex items-start gap-2">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500" />
+              <span>{item}</span>
+            </p>
+          ))}
+        </InfoBlock>
       </div>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { VehicleTypeCard } from "@/components/VehicleTypeCard";
+import { VehicleDirectoryClient } from "@/components/vehicles/VehicleDirectoryClient";
 import { prisma } from "@/lib/prisma";
 import { resolveLocale } from "@/lib/i18n";
 import { buildMetadata } from "@/lib/seo";
+import { getVehiclePageSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Vehicle types",
-  description: "Compare VNBus vehicle types, comfort levels, capacities and amenities.",
+  title: "Loại xe",
+  description: "So sánh các loại xe VNBus theo sức chứa, mức giá, tiện ích và trải nghiệm phù hợp.",
   path: "/vehicles",
 });
 
@@ -19,22 +20,25 @@ export default async function VehiclesPage({
 }) {
   const { lang } = await searchParams;
   const locale = resolveLocale(lang);
-  const vehicles = await prisma.vehicleType.findMany({ orderBy: { name: "asc" } });
+  const [vehicles, vehiclePageSettings] = await Promise.all([
+    prisma.vehicleType.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        trips: {
+          where: { status: "ACTIVE" },
+          select: { price: true, currency: true, amenities: true },
+          orderBy: { price: "asc" },
+        },
+      },
+    }),
+    getVehiclePageSettings(),
+  ]);
 
   return (
-    <section className="section-space">
-      <div className="container-shell space-y-8">
-        <div>
-          <p className="eyebrow">Vehicles</p>
-          <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-black text-ink">Explore all vehicles</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-            Vehicle types are managed in admin and reused across trips, search filters and route cards.
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {vehicles.map((vehicle) => <VehicleTypeCard key={vehicle.id} vehicleType={vehicle} locale={locale} />)}
-        </div>
-      </div>
-    </section>
+    <VehicleDirectoryClient
+      vehicles={vehicles}
+      locale={locale}
+      banner={vehiclePageSettings}
+    />
   );
 }

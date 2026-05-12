@@ -13,7 +13,10 @@ export type SmartSearchMode =
   | "comfortable"
   | "pickup"
   | "fastest"
-  | "border";
+  | "border"
+  | "overnight"
+  | "family"
+  | "wc";
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -190,6 +193,22 @@ export function getTripPriorityScore(
   if (mode === "border") {
     const borderBonus = input.isInternational ? 30 : -10;
     return borderBonus + trustScore + input.operatorRating * 5;
+  }
+
+  if (mode === "overnight") {
+    const sleeperBonus = /sleeper|cabin|giường|limousine/i.test(input.vehicleTypeName) ? 24 : 0;
+    return sleeperBonus + comfortScore * 18 + trustScore + input.operatorRating * 5;
+  }
+
+  if (mode === "family") {
+    const pickupScore = pickupClarity === "clear" ? 26 : pickupClarity === "guided" ? 18 : 8;
+    return pickupScore + comfortScore * 14 + trustScore + input.operatorRating * 6;
+  }
+
+  if (mode === "wc") {
+    const amenityText = input.amenities.join(" ");
+    const wcBonus = /\b(wc|toilet|restroom)\b|nhà vệ sinh|ve sinh/i.test(amenityText) ? 40 : -8;
+    return wcBonus + trustScore + comfortScore * 8 + input.operatorRating * 5;
   }
 
   return trustScore + comfortScore * 6 + input.operatorRating * 8;

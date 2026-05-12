@@ -101,7 +101,7 @@ export async function getPopularSearchesFromDatabase(limit = 6) {
       if (href === "/search?") return;
       const label =
         log.fromSlug && log.toSlug
-          ? `${cityNames.get(log.fromSlug) ?? log.fromSlug} -> ${cityNames.get(log.toSlug) ?? log.toSlug}`
+          ? `${cityNames.get(log.fromSlug) ?? log.fromSlug} → ${cityNames.get(log.toSlug) ?? log.toSlug}`
           : log.vehicleSlug
             ? `Vehicle: ${log.vehicleSlug.replaceAll("-", " ")}`
             : log.smart
@@ -130,7 +130,10 @@ export async function getPopularSearchesFromDatabase(limit = 6) {
 
 export async function getFallbackPopularRouteSearches(limit = 6) {
   const routes = await prisma.route.findMany({
-    where: { status: EntityStatus.ACTIVE },
+    where: {
+      status: EntityStatus.ACTIVE,
+      trips: { some: { status: { in: publicTripStatuses } } },
+    },
     include: {
       fromCity: true,
       toCity: true,
@@ -144,16 +147,59 @@ export async function getFallbackPopularRouteSearches(limit = 6) {
     .sort((left, right) => right._count.bookingRequests - left._count.bookingRequests || right._count.trips - left._count.trips)
     .slice(0, limit)
     .map((route) => ({
-      label: `${route.fromCity.name} -> ${route.toCity.name}`,
+      label: `${route.fromCity.name} → ${route.toCity.name}`,
       href: `/search?from=${route.fromCity.slug}&to=${route.toCity.slug}`,
       count: route._count.bookingRequests,
     }));
 }
 
 export async function getHomepagePopularSearches(limit = 6) {
-  const popularSearches = await getPopularSearchesFromDatabase(limit);
-  if (popularSearches.length) {
-    return popularSearches;
+  const popularSearches = await getPopularSearchesFromDatabase(limit * 3);
+  const routeSearches = popularSearches.filter((item) => {
+    const params = new URLSearchParams(item.href.split("?")[1] ?? "");
+    return Boolean(params.get("from") && params.get("to"));
+  });
+
+  if (routeSearches.length) {
+    const routePairs = routeSearches.map((item) => {
+      const params = new URLSearchParams(item.href.split("?")[1] ?? "");
+      return {
+        item,
+        from: params.get("from") ?? "",
+        to: params.get("to") ?? "",
+      };
+    });
+
+    const activeRoutes = await prisma.route.findMany({
+      where: {
+        status: EntityStatus.ACTIVE,
+        trips: { some: { status: { in: publicTripStatuses } } },
+        OR: routePairs.map((pair) => ({
+          fromCity: { slug: pair.from },
+          toCity: { slug: pair.to },
+        })),
+      },
+      include: { fromCity: true, toCity: true },
+    });
+    const activePairKeys = new Set(
+      activeRoutes.map((route) => `${route.fromCity.slug}:${route.toCity.slug}`),
+    );
+    const validRouteSearches = routePairs
+      .filter((pair) => activePairKeys.has(`${pair.from}:${pair.to}`))
+      .map((pair) => ({
+        ...pair.item,
+        label: pair.item.label.replace(/\s*->\s*/g, " → "),
+      }))
+      .slice(0, limit);
+
+    if (validRouteSearches.length) {
+      const fallback = await getFallbackPopularRouteSearches(limit);
+      const seen = new Set(validRouteSearches.map((item) => item.href));
+      return [
+        ...validRouteSearches,
+        ...fallback.filter((item) => !seen.has(item.href)),
+      ].slice(0, limit);
+    }
   }
 
   return getFallbackPopularRouteSearches(limit);

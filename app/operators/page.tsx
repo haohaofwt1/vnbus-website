@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { EntityStatus, TripStatus } from "@prisma/client";
-import { OperatorCard } from "@/components/OperatorCard";
+import { OperatorDirectoryClient, type OperatorDirectoryItem } from "@/components/operators/OperatorDirectoryClient";
 import { prisma } from "@/lib/prisma";
 import { resolveLocale } from "@/lib/i18n";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Bus operators",
-  description: "Browse active VNBus operators and compare verified route coverage.",
+  title: "Nhà xe uy tín trên VNBus",
+  description:
+    "Khám phá các đối tác vận chuyển đã xác minh, đang khai thác tuyến và hỗ trợ đặt vé online trên VNBus.",
   path: "/operators",
 });
 
@@ -26,29 +27,51 @@ export default async function OperatorsPage({
       trips: {
         where: { status: TripStatus.ACTIVE, route: { status: EntityStatus.ACTIVE } },
         select: {
+          id: true,
+          price: true,
           routeId: true,
-          route: { select: { isInternational: true } },
-          vehicleType: { select: { name: true } },
+          route: {
+            select: {
+              slug: true,
+              isInternational: true,
+              distanceKm: true,
+              fromCity: { select: { name: true, slug: true, region: true } },
+              toCity: { select: { name: true, slug: true, region: true } },
+            },
+          },
+          vehicleType: { select: { name: true, slug: true } },
         },
       },
     },
     orderBy: [{ verified: "desc" }, { rating: "desc" }, { updatedAt: "desc" }],
   });
 
+  const items: OperatorDirectoryItem[] = operators.map((operator) => ({
+    id: operator.id,
+    slug: operator.slug,
+    name: operator.name,
+    description: operator.description,
+    rating: operator.rating,
+    verified: operator.verified,
+    logoUrl: operator.logoUrl,
+    trips: operator.trips.map((trip) => ({
+      id: trip.id,
+      price: trip.price,
+      routeId: trip.routeId,
+      route: {
+        slug: trip.route.slug,
+        isInternational: trip.route.isInternational,
+        distanceKm: trip.route.distanceKm,
+        fromCity: trip.route.fromCity,
+        toCity: trip.route.toCity,
+      },
+      vehicleType: trip.vehicleType,
+    })),
+  }));
   return (
-    <section className="section-space">
-      <div className="container-shell space-y-8">
-        <div>
-          <p className="eyebrow">Operators</p>
-          <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-black text-ink">Active operators</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-            Operator cards are loaded from the admin operators module and only active operators are public.
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {operators.map((operator) => <OperatorCard key={operator.id} operator={operator} locale={locale} />)}
-        </div>
-      </div>
-    </section>
+    <OperatorDirectoryClient
+      operators={items}
+      locale={locale}
+    />
   );
 }

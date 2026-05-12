@@ -1,4 +1,5 @@
 import { createRouteAction, updateRouteAction } from "@/lib/actions/admin-routes";
+import { AdminImageUploadField } from "./AdminImageUploadField";
 
 const inputClass =
   "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm";
@@ -16,6 +17,7 @@ type RouteFormProps = {
     estimatedDuration: string;
     priceFrom: number;
     currency: string;
+    imageUrl: string;
     shortDescription: string;
     longDescription: string;
     seoTitle: string;
@@ -142,6 +144,14 @@ export function RouteForm({ route, cities }: RouteFormProps) {
         </label>
       </div>
 
+      <AdminImageUploadField
+        name="imageUrl"
+        label="Route image"
+        defaultValue={route?.imageUrl}
+        folder="routes"
+        hint="Ảnh này được dùng ưu tiên trên trang Tuyến xe. Nếu để trống, website sẽ dùng ảnh thành phố đến hoặc ảnh mặc định."
+      />
+
       <label className="block space-y-2">
         <span className="text-sm font-medium text-slate-700">Short description</span>
         <textarea
@@ -195,4 +205,3 @@ export function RouteForm({ route, cities }: RouteFormProps) {
     </form>
   );
 }
-

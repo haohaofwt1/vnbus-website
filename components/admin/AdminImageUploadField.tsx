@@ -7,7 +7,7 @@ type AdminImageUploadFieldProps = {
   name: string;
   label: string;
   defaultValue?: string;
-  folder?: "branding" | "operators" | "cities" | "blog";
+  folder?: "branding" | "operators" | "cities" | "routes" | "vehicles" | "blog";
   required?: boolean;
   hint?: string;
 };

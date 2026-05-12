@@ -54,6 +54,9 @@ export function SmartRecommendationTabs({
         pickup: "Easiest pickup",
         fastest: "Fastest",
         border: "Cross-border ready",
+        overnight: "Night trip",
+        family: "Family friendly",
+        wc: "Bus with WC",
       },
     },
     vi: {
@@ -65,6 +68,9 @@ export function SmartRecommendationTabs({
         pickup: "Dễ đón nhất",
         fastest: "Nhanh nhất",
         border: "Sẵn sàng qua biên giới",
+        overnight: "Đi đêm",
+        family: "Đi cùng trẻ em",
+        wc: "Xe có WC",
       },
     },
     ko: {
@@ -76,6 +82,9 @@ export function SmartRecommendationTabs({
         pickup: "픽업이 쉬움",
         fastest: "가장 빠름",
         border: "국경 간 준비",
+        overnight: "야간 이동",
+        family: "아이와 함께",
+        wc: "화장실 있는 버스",
       },
     },
     ja: {
@@ -87,6 +96,9 @@ export function SmartRecommendationTabs({
         pickup: "乗車しやすい",
         fastest: "最速",
         border: "越境向け",
+        overnight: "夜行移動",
+        family: "子ども連れ",
+        wc: "トイレ付き車両",
       },
     },
   }[locale];
@@ -107,6 +119,14 @@ export function SmartRecommendationTabs({
       { key: "border", label: labels?.tabs.border?.[locale] ?? fallback.tabs.border },
     ],
   };
+  const extraTabLabels: Record<string, string> = {
+    overnight: fallback.tabs.overnight,
+    family: fallback.tabs.family,
+    wc: fallback.tabs.wc,
+  };
+  const tabs = extraTabLabels[activeSmart]
+    ? [{ key: activeSmart, label: extraTabLabels[activeSmart] }, ...copy.tabs]
+    : copy.tabs;
 
   return (
     <div className="space-y-3">
@@ -115,7 +135,7 @@ export function SmartRecommendationTabs({
         {copy.title}
       </div>
       <div className="flex flex-wrap gap-2">
-        {copy.tabs.map((tab) => {
+        {tabs.map((tab) => {
           const isActive = activeSmart === tab.key;
 
           return (

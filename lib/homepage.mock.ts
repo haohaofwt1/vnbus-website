@@ -49,11 +49,11 @@ export const seasonalCampaigns = [
 ];
 
 export const smartSuggestions = [
-  { id: "night", title: "Đi đêm", description: "Gợi ý xe giường, cabin VIP thoải mái", href: "/search?smart=overnight", icon: "night", color: "blue", enabled: true, showOnHomepage: true, displayOrder: 1 },
+  { id: "night", title: "Đi đêm", description: "Ưu tiên xe giường, cabin và khung giờ sau 18:00", href: "/search?smart=overnight&departureWindow=evening", icon: "night", color: "blue", enabled: true, showOnHomepage: true, displayOrder: 1 },
   { id: "family", title: "Đi cùng trẻ em", description: "Xe rộng rãi, ít rung lắc, đón gần, an toàn", href: "/search?smart=family", icon: "family", color: "orange", enabled: true, showOnHomepage: true, displayOrder: 2 },
   { id: "budget", title: "Muốn tiết kiệm", description: "Giờ thấp điểm, ưu đãi tốt nhất", href: "/search?smart=value", icon: "budget", color: "green", enabled: true, showOnHomepage: true, displayOrder: 3 },
   { id: "pickup", title: "Đón gần nơi ở", description: "Gợi ý xe có điểm đón gần bạn nhất", href: "/search?smart=pickup", icon: "pickup", color: "purple", enabled: true, showOnHomepage: true, displayOrder: 4 },
-  { id: "wc", title: "Xe có WC", description: "Gợi ý xe có nhà vệ sinh trên xe", href: "/search?amenities=wc", icon: "wc", color: "cyan", enabled: true, showOnHomepage: true, displayOrder: 5 },
+  { id: "wc", title: "Xe có WC", description: "Ưu tiên chuyến có tiện ích WC nếu dữ liệu nhà xe có khai báo", href: "/search?smart=wc", icon: "wc", color: "cyan", enabled: true, showOnHomepage: true, displayOrder: 5 },
   { id: "border", title: "Đi quốc tế", description: "Tuyến Việt Nam - Lào - Campuchia", href: "/search?smart=border", icon: "border", color: "blue", enabled: true, showOnHomepage: true, displayOrder: 6 },
 ];
 
@@ -396,11 +396,11 @@ export const localizedHomepageFallbacks: Record<string, HomepageFallbackBundle> 
       { label: "Support", href: "/contact", enabled: true, displayOrder: 6 },
     ],
     suggestions: [
-      { id: "night", title: "Night trip", description: "Sleeper and VIP cabin suggestions", href: "/search?smart=overnight", icon: "night", color: "blue", enabled: true, showOnHomepage: true, displayOrder: 1 },
+      { id: "night", title: "Night trip", description: "Prioritizes sleepers, cabins, and departures after 18:00", href: "/search?smart=overnight&departureWindow=evening", icon: "night", color: "blue", enabled: true, showOnHomepage: true, displayOrder: 1 },
       { id: "family", title: "With children", description: "Roomy, safer pickup, smoother rides", href: "/search?smart=family", icon: "family", color: "orange", enabled: true, showOnHomepage: true, displayOrder: 2 },
       { id: "budget", title: "Save money", description: "Off-peak times and better offers", href: "/search?smart=value", icon: "budget", color: "green", enabled: true, showOnHomepage: true, displayOrder: 3 },
       { id: "pickup", title: "Nearby pickup", description: "Trips with pickup points near you", href: "/search?smart=pickup", icon: "pickup", color: "purple", enabled: true, showOnHomepage: true, displayOrder: 4 },
-      { id: "wc", title: "Bus with WC", description: "Suggestions for buses with onboard toilets", href: "/search?amenities=wc", icon: "wc", color: "cyan", enabled: true, showOnHomepage: true, displayOrder: 5 },
+      { id: "wc", title: "Bus with WC", description: "Prioritizes trips with WC amenities when operator data includes them", href: "/search?smart=wc", icon: "wc", color: "cyan", enabled: true, showOnHomepage: true, displayOrder: 5 },
       { id: "border", title: "International", description: "Vietnam - Laos - Cambodia routes", href: "/search?smart=border", icon: "border", color: "blue", enabled: true, showOnHomepage: true, displayOrder: 6 },
     ],
     promotions: [

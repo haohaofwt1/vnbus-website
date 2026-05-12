@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { FilterSidebar } from "@/components/FilterSidebar";
+import { SearchResultsExperience } from "@/components/SearchResultsExperience";
 import { SearchSummaryBar } from "@/components/SearchSummaryBar";
-import { SmartRecommendationTabs } from "@/components/SmartRecommendationTabs";
-import { TripCard } from "@/components/TripCard";
 import { getSearchFormOptions, recordSearchQuery, searchTrips, type SearchFilters } from "@/lib/data";
 import { resolveLocale } from "@/lib/i18n";
 import { buildItemListSchema } from "@/lib/schema";
@@ -26,7 +25,10 @@ function resolveSmartMode(value?: string): SmartSearchMode {
     value === "comfortable" ||
     value === "pickup" ||
     value === "fastest" ||
-    value === "border"
+    value === "border" ||
+    value === "overnight" ||
+    value === "family" ||
+    value === "wc"
   ) {
     return value;
   }
@@ -158,8 +160,8 @@ export default async function SearchPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
       />
 
-      <section className="section-space">
-        <div className="container-shell space-y-8">
+      <section className="bg-[linear-gradient(180deg,#f7fbff_0%,#ffffff_58%)] py-5 sm:py-7">
+        <div className="mx-auto max-w-[1280px] space-y-7 px-4 sm:px-6 lg:px-8">
           <SearchSummaryBar
             locale={locale}
             summary={{
@@ -181,50 +183,62 @@ export default async function SearchPage({
             }}
           />
 
-          <div className="space-y-4">
-            <h1 className="font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
-              {copy.title}
-            </h1>
-            <p className="max-w-3xl text-base leading-8 text-muted">{copy.description}</p>
-            <SmartRecommendationTabs locale={locale} filters={filters} labels={searchUiLabels} />
-            <p className="text-sm text-slate-500">{copy.smartHelp}</p>
-          </div>
-
-          <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
-            <FilterSidebar
-              filters={filters}
-              operators={results.operators}
-              pickupOptions={results.pickupOptions}
-              dropoffOptions={results.dropoffOptions}
-              amenityOptions={results.amenityOptions}
-              vehicleTypes={searchData.vehicleTypes}
-              locale={locale}
-              uiLabels={searchUiLabels}
-            />
-
-            <div className="space-y-5">
-              {rankedTrips.length ? (
-                rankedTrips.map((trip) => (
-                  <TripCard
-                    key={trip.id}
-                    trip={trip}
-                    showRoute
-                    departureDate={filters.departureDate}
-                    returnDate={filters.returnDate}
-                    passengers={Number(filters.passengers ?? 1)}
+          <div className="grid gap-5 lg:grid-cols-[270px_1fr]">
+            <div>
+              <details className="group rounded-[24px] border border-[#E5EAF2] bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)] lg:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#071A33]">
+                  <span>{locale === "vi" ? "Bộ lọc" : "Filters"}</span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#2563EB]">
+                    {locale === "vi" ? "Mở" : "Open"}
+                  </span>
+                </summary>
+                <div className="mt-4 max-h-[78vh] overflow-auto pr-1">
+                  <FilterSidebar
+                    filters={filters}
+                    operators={results.operators}
+                    pickupOptions={results.pickupOptions}
+                    dropoffOptions={results.dropoffOptions}
+                    amenityOptions={results.amenityOptions}
+                    vehicleTypes={searchData.vehicleTypes}
                     locale={locale}
                     uiLabels={searchUiLabels}
                   />
-                ))
-              ) : (
+                </div>
+              </details>
+              <div className="hidden lg:block lg:sticky lg:top-24">
+                <FilterSidebar
+                  filters={filters}
+                  operators={results.operators}
+                  pickupOptions={results.pickupOptions}
+                  dropoffOptions={results.dropoffOptions}
+                  amenityOptions={results.amenityOptions}
+                  vehicleTypes={searchData.vehicleTypes}
+                  locale={locale}
+                  uiLabels={searchUiLabels}
+                />
+              </div>
+            </div>
+
+            <SearchResultsExperience
+              trips={rankedTrips}
+              smartMode={smartMode}
+              showRoute
+              departureDate={filters.departureDate}
+              returnDate={filters.returnDate}
+              passengers={Number(filters.passengers ?? 1)}
+              locale={locale}
+              uiLabels={searchUiLabels}
+              filters={filters}
+              summary={{ fromLabel, toLabel, vehicleTypeLabel }}
+              emptyState={
                 <div className="card-surface p-10 text-center">
                   <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
                     {copy.noTrips}
                   </h2>
                   <p className="mt-4 text-sm leading-7 text-muted">{copy.noTripsBody}</p>
                 </div>
-              )}
-            </div>
+              }
+            />
           </div>
         </div>
       </section>

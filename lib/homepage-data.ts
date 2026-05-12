@@ -17,6 +17,7 @@ import {
   trustBenefits,
 } from "@/lib/homepage.mock";
 import type { Locale } from "@/lib/i18n";
+import { getHomepageSettings } from "@/lib/site-settings";
 
 export type PopularRouteItem = {
   id: string;
@@ -618,6 +619,7 @@ export async function getHomepageData(locale: Locale = "vi"): Promise<HomepageDa
     reviews,
     news,
     faqs,
+    homepageSettings,
   ] = await Promise.all([
     getHomepageConfig(locale),
     getHomepageLocations(),
@@ -631,8 +633,15 @@ export async function getHomepageData(locale: Locale = "vi"): Promise<HomepageDa
     getReviews(4, locale),
     getNews(4, locale),
     getFaqs(4, locale),
+    getHomepageSettings(),
   ]);
   const fallback = localized(locale);
+  const suggestions =
+    locale === "vi"
+      ? homepageSettings.smartSuggestions
+          .filter((item) => item.enabled && item.showOnHomepage)
+          .sort((a, b) => a.displayOrder - b.displayOrder)
+      : fallback.suggestions;
 
   return {
     config,
@@ -645,7 +654,7 @@ export async function getHomepageData(locale: Locale = "vi"): Promise<HomepageDa
     promotions,
     campaigns,
     operators,
-    suggestions: fallback.suggestions,
+    suggestions,
     vehicles,
     reviews,
     news,
@@ -658,6 +667,13 @@ export async function getHeaderNavigation(locale: Locale) {
   return localized(locale).headerNavigation;
 }
 export async function getSmartSuggestions(locale: Locale) {
+  if (locale === "vi") {
+    const settings = await getHomepageSettings();
+    return settings.smartSuggestions
+      .filter((item) => item.enabled && item.showOnHomepage)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
   return localized(locale).suggestions.filter((item) => item.enabled && item.showOnHomepage).sort((a, b) => a.displayOrder - b.displayOrder);
 }
 export async function getPopularRoutesService(locale: Locale) {

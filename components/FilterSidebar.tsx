@@ -121,8 +121,8 @@ export function FilterSidebar({
 
   const fallback = {
     en: {
-      title: "Refine your route",
-      body: "Choose what matters most and results update immediately.",
+      title: "Filters",
+      body: "Narrow down trips by time, vehicle, price and operator.",
       autoUpdate: "Results update automatically",
       updating: "Updating results...",
       clearFilters: "Clear filters",
@@ -144,10 +144,20 @@ export function FilterSidebar({
       pickupPoint: "Pickup point",
       dropoffPoint: "Drop-off point",
       amenities: "Amenities",
+      smartNeeds: "What kind of trip do you want?",
+      smartOptions: [
+        ["value", "Cheapest"],
+        ["fastest", "Fastest"],
+        ["overnight", "Night trip"],
+        ["comfortable", "Roomy / comfortable"],
+        ["wc", "Bus with WC"],
+        ["family", "Family friendly"],
+        ["pickup", "Private cabin / easier pickup"],
+      ],
     },
     vi: {
-      title: "Tinh chỉnh chuyến đi",
-      body: "Chọn điều bạn quan tâm nhất và kết quả sẽ tự cập nhật ngay.",
+      title: "Bộ lọc",
+      body: "Lọc nhanh theo giờ, loại xe, giá và nhà xe.",
       autoUpdate: "Kết quả tự cập nhật",
       updating: "Đang cập nhật kết quả...",
       clearFilters: "Xoá bộ lọc",
@@ -169,6 +179,16 @@ export function FilterSidebar({
       pickupPoint: "Điểm đón",
       dropoffPoint: "Điểm trả",
       amenities: "Tiện ích",
+      smartNeeds: "Bạn muốn chuyến đi như thế nào?",
+      smartOptions: [
+        ["value", "Đi rẻ nhất"],
+        ["fastest", "Đi nhanh nhất"],
+        ["overnight", "Đi đêm"],
+        ["comfortable", "Xe rộng/thoải mái"],
+        ["wc", "Có WC"],
+        ["family", "Phù hợp gia đình"],
+        ["pickup", "Cabin đôi / riêng tư"],
+      ],
     },
     ko: {
       title: "결과 세부 조정",
@@ -194,6 +214,16 @@ export function FilterSidebar({
       pickupPoint: "탑승 위치",
       dropoffPoint: "하차 위치",
       amenities: "편의시설",
+      smartNeeds: "어떤 이동을 원하시나요?",
+      smartOptions: [
+        ["value", "최저가"],
+        ["fastest", "가장 빠름"],
+        ["overnight", "야간 이동"],
+        ["comfortable", "넓고 편안함"],
+        ["wc", "화장실"],
+        ["family", "가족 친화"],
+        ["pickup", "개인 캐빈 / 쉬운 픽업"],
+      ],
     },
     ja: {
       title: "結果を絞り込む",
@@ -219,6 +249,16 @@ export function FilterSidebar({
       pickupPoint: "乗車場所",
       dropoffPoint: "降車場所",
       amenities: "設備",
+      smartNeeds: "どんな移動にしたいですか？",
+      smartOptions: [
+        ["value", "最安値"],
+        ["fastest", "最速"],
+        ["overnight", "夜行"],
+        ["comfortable", "広く快適"],
+        ["wc", "トイレ付き"],
+        ["family", "家族向け"],
+        ["pickup", "個室 / 乗車しやすい"],
+      ],
     },
   }[resolvedLocale];
   const copy = {
@@ -299,21 +339,21 @@ export function FilterSidebar({
     <form
       ref={formRef}
       action="/search"
-      className="space-y-6"
+      className="space-y-4 rounded-[24px] border border-[#E5EAF2] bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]"
       onChange={handleFormChange}
     >
       <HiddenBaseFields filters={filters} />
 
-      <div className="rounded-[1.75rem] border border-slate-200/80 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_100%)] p-5 shadow-sm">
+      <div>
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-brand-600" />
-              <h3 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
+                <SlidersHorizontal className="h-4 w-4 text-[#2563EB]" />
+              <h3 className="font-[family-name:var(--font-heading)] text-xl font-black text-[#071B3A]">
                 {copy.title}
               </h3>
             </div>
-            <p className="mt-2 text-sm leading-7 text-muted">{copy.body}</p>
+            <p className="mt-1 text-sm leading-6 text-muted">{copy.body}</p>
           </div>
           {activeCount > 0 ? (
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm">
@@ -337,8 +377,8 @@ export function FilterSidebar({
         </div>
       </div>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.vehicleType}</h3>
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.vehicleType}</h3>
         <select
           name="vehicleType"
           defaultValue={filters.vehicleType}
@@ -353,21 +393,26 @@ export function FilterSidebar({
         </select>
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.departureWindow}</h3>
-        <div className="mt-3 space-y-2 text-sm text-slate-600">
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.departureWindow}</h3>
+        <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
           {[
             ["early", copy.early],
             ["morning", copy.morning],
             ["afternoon", copy.afternoon],
             ["evening", copy.evening],
           ].map(([value, label]) => (
-            <label key={value} className="flex items-center gap-2">
+            <label key={value} className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-xs font-black transition ${
+              selectedWindows.includes(value)
+                ? "border-blue-200 bg-blue-50 text-[#2563EB]"
+                : "border-[#E6EEF8] bg-[#F8FBFF] text-slate-600"
+            }`}>
               <input
                 type="checkbox"
                 name="departureWindow"
                 value={value}
                 defaultChecked={selectedWindows.includes(value)}
+                className="sr-only"
               />
               <span>{label}</span>
             </label>
@@ -375,8 +420,8 @@ export function FilterSidebar({
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.maxPrice}</h3>
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.maxPrice}</h3>
         <input
           type="number"
           name="maxPrice"
@@ -386,8 +431,8 @@ export function FilterSidebar({
         />
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.minimumRating}</h3>
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.minimumRating}</h3>
         <select
           name="rating"
           defaultValue={filters.rating}
@@ -399,8 +444,8 @@ export function FilterSidebar({
         </select>
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.operators}</h3>
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.operators}</h3>
         <div className="mt-3 max-h-48 space-y-2 overflow-auto text-sm text-slate-600">
           {operators.map((operator) => (
             <label key={operator.id} className="flex items-center gap-2">
@@ -418,8 +463,8 @@ export function FilterSidebar({
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.pickupPoint}</h3>
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.pickupPoint}</h3>
         <div className="mt-3 max-h-40 space-y-2 overflow-auto text-sm text-slate-600">
           {pickupOptions.map((option) => (
             <label key={option} className="flex items-center gap-2">
@@ -435,8 +480,8 @@ export function FilterSidebar({
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.dropoffPoint}</h3>
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.dropoffPoint}</h3>
         <div className="mt-3 max-h-40 space-y-2 overflow-auto text-sm text-slate-600">
           {dropoffOptions.map((option) => (
             <label key={option} className="flex items-center gap-2">
@@ -452,8 +497,8 @@ export function FilterSidebar({
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200/80 bg-white p-4">
-        <h3 className="font-semibold text-ink">{copy.amenities}</h3>
+      <section className="border-t border-[#E6EEF8] pt-4">
+        <h3 className="font-black text-[#071B3A]">{copy.amenities}</h3>
         <div className="mt-3 max-h-48 space-y-2 overflow-auto text-sm text-slate-600">
           {amenityOptions.map((option) => (
             <label key={option} className="flex items-center gap-2">
@@ -468,6 +513,15 @@ export function FilterSidebar({
           ))}
         </div>
       </section>
+
+      <div className="sticky bottom-0 -mx-4 -mb-4 border-t border-[#E5EAF2] bg-white/95 p-4 backdrop-blur lg:static lg:-mx-0 lg:-mb-0 lg:border-0 lg:bg-transparent lg:p-0">
+        <button
+          type="submit"
+          className="w-full rounded-2xl bg-[#FF6A1A] px-4 py-3 text-sm font-black text-white shadow-[0_12px_26px_rgba(255,106,26,0.22)] lg:hidden"
+        >
+          {resolvedLocale === "vi" ? "Áp dụng" : "Apply"}
+        </button>
+      </div>
     </form>
   );
 }

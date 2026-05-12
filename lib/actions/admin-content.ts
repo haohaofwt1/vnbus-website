@@ -9,6 +9,7 @@ import {
   FOOTER_SETTING_KEY,
   HOMEPAGE_SETTING_KEY,
   SEARCH_UI_LABELS_SETTING_KEY,
+  VEHICLE_PAGE_SETTING_KEY,
   type LocaleMap,
 } from "@/lib/site-settings";
 import {
@@ -197,6 +198,25 @@ function readRows(formData: FormData, prefix: string, fields: string[], count: n
   ).filter((row) => Object.values(row).some(Boolean));
 }
 
+function readSmartSuggestionRows(formData: FormData) {
+  return Array.from({ length: 6 }, (_, index) => {
+    const id = formData.get(`smart_${index}_id`)?.toString().trim() || `smart-${index + 1}`;
+    const displayOrder = Number(formData.get(`smart_${index}_displayOrder`)?.toString() || index + 1);
+
+    return {
+      id,
+      title: formData.get(`smart_${index}_title`)?.toString().trim() ?? "",
+      description: formData.get(`smart_${index}_description`)?.toString().trim() ?? "",
+      href: formData.get(`smart_${index}_href`)?.toString().trim() ?? "/search",
+      icon: formData.get(`smart_${index}_icon`)?.toString().trim() ?? "budget",
+      color: formData.get(`smart_${index}_color`)?.toString().trim() ?? "blue",
+      enabled: formData.get(`smart_${index}_enabled`) === "on",
+      showOnHomepage: formData.get(`smart_${index}_showOnHomepage`) === "on",
+      displayOrder: Number.isFinite(displayOrder) ? displayOrder : index + 1,
+    };
+  }).filter((row) => row.title && row.href);
+}
+
 function readFooterLinks(formData: FormData, groupIndex: number) {
   return Array.from({ length: 5 }, (_, index) => ({
     label: formData.get(`footer_group_${groupIndex}_link_${index}_label`)?.toString().trim() ?? "",
@@ -273,6 +293,7 @@ export async function updateHomepageSettingsAction(formData: FormData) {
       href: formData.get("style_href")?.toString().trim() ?? "/search",
       cards: readRows(formData, "style_cards", ["title", "body", "vehicle", "smart"], 6),
     },
+    smartSuggestions: readSmartSuggestionRows(formData),
     borderSection: {
       eyebrow: formData.get("border_eyebrow")?.toString().trim() ?? "",
       title: formData.get("border_title")?.toString().trim() ?? "",
@@ -319,6 +340,42 @@ export async function updateHomepageSettingsAction(formData: FormData) {
   }
 
   revalidatePath("/");
+  revalidatePath("/search");
   revalidatePath("/admin/content");
   redirect("/admin/content?homepageSaved=1");
+}
+
+export async function updateVehiclePageSettingsAction(formData: FormData) {
+  const session = await requireAdminUser();
+  const value = {
+    bannerImageUrl: formData.get("vehiclePage_bannerImageUrl")?.toString().trim() ?? "",
+    bannerAlt: formData.get("vehiclePage_bannerAlt")?.toString().trim() ?? "",
+  };
+
+  try {
+    const setting = await prisma.siteSetting.upsert({
+      where: { key: VEHICLE_PAGE_SETTING_KEY },
+      update: { value },
+      create: { key: VEHICLE_PAGE_SETTING_KEY, value },
+    });
+
+    await createAuditLog({
+      userId: session.id,
+      entityType: "SiteSetting",
+      entityId: setting.id,
+      action: "UPDATE_VEHICLE_PAGE",
+      metadata: { key: VEHICLE_PAGE_SETTING_KEY },
+    });
+  } catch (error) {
+    if (isMissingSiteSettingTable(error)) {
+      redirect("/admin/content?error=migrate-site-settings");
+    }
+
+    console.error("Failed to update vehicle page settings.", error);
+    redirect("/admin/content?error=vehicle-page-save-failed");
+  }
+
+  revalidatePath("/vehicles");
+  revalidatePath("/admin/content");
+  redirect("/admin/content?vehiclePageSaved=1");
 }

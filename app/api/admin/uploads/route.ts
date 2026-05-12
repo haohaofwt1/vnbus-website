@@ -11,7 +11,7 @@ const allowedMimeTypes = new Map([
   ["image/svg+xml", ".svg"],
 ]);
 
-const allowedFolders = new Set(["branding", "operators", "cities", "blog"]);
+const allowedFolders = new Set(["branding", "operators", "cities", "routes", "vehicles", "blog"]);
 
 export async function POST(request: Request) {
   const session = await getAdminSession();

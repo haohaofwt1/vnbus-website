@@ -197,6 +197,25 @@ export default async function OperatorPage({
     .filter(Boolean);
 
   const amenities = Array.from(new Set(data.operator.trips.flatMap((trip) => trip.amenities)));
+  const websiteHost = data.operator.website.replace("https://", "");
+  const trustMetrics = [
+    { label: copy.rating, value: `${data.operator.rating.toFixed(1)} / 5` },
+    { label: copy.tripsInFeed, value: data.operator.trips.length.toString() },
+    { label: copy.vehicleTypes, value: data.vehicleTypes.length.toString() },
+    { label: copy.amenities, value: amenities.length.toString() },
+  ];
+  const whyChoosePoints =
+    locale === "vi"
+      ? [
+          "Điểm đón và lịch trình hiển thị rõ, dễ so sánh nhanh.",
+          "Loại xe đa dạng theo nhu cầu: cabin, giường, ghế ngồi.",
+          "Đánh giá và độ tin cậy hiển thị trực tiếp trên từng chuyến.",
+        ]
+      : [
+          "Clear pickup and schedule details for fast comparison.",
+          "Multiple vehicle formats to match different trip needs.",
+          "Rating and trust signals are visible on every trip.",
+        ];
 
   return (
     <>
@@ -214,91 +233,69 @@ export default async function OperatorPage({
             ]}
           />
 
-          <div className="card-surface overflow-hidden p-8 sm:p-10">
-            <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-              <div>
-                <p className="eyebrow">{copy.profile}</p>
-                <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
-                  {data.operator.name}
-                </h1>
-                <p className="mt-4 max-w-3xl text-base leading-8 text-muted">
-                  {data.operator.description}
-                </p>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <span className="rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700">
-                    {copy.rating} {data.operator.rating.toFixed(1)} / 5
+          <div className="card-surface overflow-hidden p-7 sm:p-9">
+            <div className="rounded-[1.5rem] bg-[linear-gradient(135deg,#F8FBFF_0%,#FFFFFF_55%,#FDF2E8_100%)] p-6 sm:p-8">
+              <p className="eyebrow">{copy.profile}</p>
+              <h1 className="mt-3 font-[family-name:var(--font-heading)] text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                {data.operator.name}
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted sm:text-base">
+                {data.operator.description}
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700">
+                  {copy.rating} {data.operator.rating.toFixed(1)} / 5
+                </span>
+                {data.operator.verified ? (
+                  <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
+                    {copy.verified}
                   </span>
-                  {data.operator.verified ? (
-                    <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
-                      {copy.verified}
-                    </span>
-                  ) : null}
-                </div>
+                ) : null}
               </div>
-
-              <div className="rounded-[1.75rem] bg-slate-950 p-8 text-white">
-                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-accent-300">
-                  {copy.highlights}
-                </p>
-                <dl className="mt-6 space-y-5">
-                  <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
-                    <dt className="text-white/70">{copy.tripsInFeed}</dt>
-                    <dd className="font-bold">{data.operator.trips.length}</dd>
-                  </div>
-                  <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
-                    <dt className="text-white/70">{copy.vehicleTypes}</dt>
-                    <dd className="font-bold">{data.vehicleTypes.length}</dd>
-                  </div>
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="text-white/70">{copy.website}</dt>
-                    <dd className="font-bold">{data.operator.website.replace("https://", "")}</dd>
-                  </div>
-                </dl>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  href={withLang("/search", locale)}
+                  className="inline-flex items-center justify-center rounded-2xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+                >
+                  {copy.searchTrips}
+                </Link>
+                <Link
+                  href={data.operator.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  {copy.website}: {websiteHost}
+                </Link>
               </div>
             </div>
           </div>
 
-          <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-            <div className="card-surface p-6">
-              <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
-                {copy.vehicleTypes}
-              </h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {data.vehicleTypes.map((vehicleType) => (
-                  <span
-                    key={vehicleType.id}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"
-                  >
-                    {vehicleType.name}
-                  </span>
-                ))}
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {trustMetrics.map((metric) => (
+              <div key={metric.label} className="card-surface p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  {metric.label}
+                </p>
+                <p className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
+                  {metric.value}
+                </p>
               </div>
-            </div>
-
-            <div className="card-surface p-6">
-              <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
-                {copy.amenities}
-              </h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {amenities.map((amenity) => (
-                  <span
-                    key={amenity}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"
-                  >
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-            </div>
+            ))}
           </section>
 
-          <section className="space-y-5">
-            <SectionHeader eyebrow={copy.popularRoutes} title={copy.routesServed} />
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {routes.map((route) =>
-                route ? <RouteCard key={route.id} route={route} locale={locale} /> : null,
-              )}
-            </div>
+          <section className="card-surface p-6">
+            <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
+              {copy.highlights}
+            </h2>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-muted">
+              {whyChoosePoints.map((point) => (
+                <li key={point} className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-brand-600" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section className="space-y-5">
@@ -310,6 +307,52 @@ export default async function OperatorPage({
             {data.operator.trips.map((trip) => (
               <TripCard key={trip.id} trip={trip} showRoute locale={locale} />
             ))}
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            <div className="card-surface p-6">
+              <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
+                {locale === "vi" ? "Dịch vụ & phương tiện" : "Service & vehicle mix"}
+              </h2>
+              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {copy.vehicleTypes}
+              </h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {data.vehicleTypes.map((vehicleType) => (
+                  <span
+                    key={vehicleType.id}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"
+                  >
+                    {vehicleType.name}
+                  </span>
+                ))}
+              </div>
+              <h3 className="mt-5 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {copy.amenities}
+              </h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {amenities.slice(0, 10).map((amenity) => (
+                  <span
+                    key={amenity}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"
+                  >
+                    {amenity}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="card-surface p-6">
+              <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
+                {copy.popularRoutes}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-muted">{copy.routesServed}</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {routes.slice(0, 4).map((route) =>
+                  route ? <RouteCard key={route.id} route={route} locale={locale} /> : null,
+                )}
+              </div>
+            </div>
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">

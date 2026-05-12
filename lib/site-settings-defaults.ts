@@ -4,6 +4,7 @@ export const BRANDING_SETTING_KEY = "branding";
 export const SEARCH_UI_LABELS_SETTING_KEY = "search_ui_labels";
 export const HOMEPAGE_SETTING_KEY = "homepage_content";
 export const FOOTER_SETTING_KEY = "footer_content";
+export const VEHICLE_PAGE_SETTING_KEY = "vehicle_page_content";
 
 export type LocaleMap = Record<Locale, string>;
 
@@ -294,6 +295,17 @@ export type HomepageSettings = {
     href: string;
     cards: Array<{ title: string; body: string; vehicle: string; smart: string }>;
   };
+  smartSuggestions: Array<{
+    id: string;
+    title: string;
+    description: string;
+    href: string;
+    icon: string;
+    color: string;
+    enabled: boolean;
+    showOnHomepage: boolean;
+    displayOrder: number;
+  }>;
   borderSection: {
     eyebrow: string;
     title: string;
@@ -316,6 +328,11 @@ export type HomepageSettings = {
   };
 };
 
+export type VehiclePageSettings = {
+  bannerImageUrl: string;
+  bannerAlt: string;
+};
+
 export type FooterSettings = {
   description: string;
   phoneNumbers: string[];
@@ -326,6 +343,11 @@ export type FooterSettings = {
   }>;
   copyright: string;
   tagline: string;
+};
+
+export const defaultVehiclePageSettings: VehiclePageSettings = {
+  bannerImageUrl: "",
+  bannerAlt: "VNBus vehicle experience banner",
 };
 
 export const defaultFooterSettings: FooterSettings = {
@@ -408,6 +430,74 @@ export const defaultHomepageSettings: HomepageSettings = {
       { title: "Premium comfort", body: "More privacy and better comfort", vehicle: "Cabin double, limousine", smart: "comfortable" },
     ],
   },
+  smartSuggestions: [
+    {
+      id: "night",
+      title: "Đi đêm",
+      description: "Ưu tiên xe giường, cabin và khung giờ sau 18:00",
+      href: "/search?smart=overnight&departureWindow=evening",
+      icon: "night",
+      color: "blue",
+      enabled: true,
+      showOnHomepage: true,
+      displayOrder: 1,
+    },
+    {
+      id: "family",
+      title: "Đi cùng trẻ em",
+      description: "Xe rộng rãi, ít rung lắc, đón gần, an toàn",
+      href: "/search?smart=family",
+      icon: "family",
+      color: "orange",
+      enabled: true,
+      showOnHomepage: true,
+      displayOrder: 2,
+    },
+    {
+      id: "budget",
+      title: "Muốn tiết kiệm",
+      description: "Giờ thấp điểm, ưu đãi tốt nhất",
+      href: "/search?smart=value",
+      icon: "budget",
+      color: "green",
+      enabled: true,
+      showOnHomepage: true,
+      displayOrder: 3,
+    },
+    {
+      id: "pickup",
+      title: "Đón gần nơi ở",
+      description: "Gợi ý xe có điểm đón gần bạn nhất",
+      href: "/search?smart=pickup",
+      icon: "pickup",
+      color: "purple",
+      enabled: true,
+      showOnHomepage: true,
+      displayOrder: 4,
+    },
+    {
+      id: "wc",
+      title: "Xe có WC",
+      description: "Ưu tiên chuyến có tiện ích WC nếu dữ liệu nhà xe có khai báo",
+      href: "/search?smart=wc",
+      icon: "wc",
+      color: "cyan",
+      enabled: true,
+      showOnHomepage: true,
+      displayOrder: 5,
+    },
+    {
+      id: "border",
+      title: "Đi quốc tế",
+      description: "Tuyến Việt Nam - Lào - Campuchia",
+      href: "/search?smart=border",
+      icon: "border",
+      color: "blue",
+      enabled: true,
+      showOnHomepage: true,
+      displayOrder: 6,
+    },
+  ],
   borderSection: {
     eyebrow: "Border-ready travel",
     title: "Border-ready routes across Vietnam, Cambodia and Laos",

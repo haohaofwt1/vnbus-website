@@ -9,9 +9,11 @@ import {
   defaultHomepageSettings,
   defaultPaymentSettings,
   defaultSearchUiLabels,
+  defaultVehiclePageSettings,
   HOMEPAGE_SETTING_KEY,
   PAYMENT_SETTING_KEY,
   SEARCH_UI_LABELS_SETTING_KEY,
+  VEHICLE_PAGE_SETTING_KEY,
 } from "@/lib/site-settings-defaults";
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -76,6 +78,10 @@ export const getHomepageSettings = cache(async () =>
 
 export const getFooterSettings = cache(async () =>
   getSettingValue(FOOTER_SETTING_KEY, defaultFooterSettings),
+);
+
+export const getVehiclePageSettings = cache(async () =>
+  getSettingValue(VEHICLE_PAGE_SETTING_KEY, defaultVehiclePageSettings),
 );
 
 export const getPaymentSettings = cache(async () =>

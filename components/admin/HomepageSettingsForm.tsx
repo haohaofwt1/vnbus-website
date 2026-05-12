@@ -40,6 +40,23 @@ function TextArea({
   );
 }
 
+function CheckboxField({
+  label,
+  name,
+  defaultChecked,
+}: {
+  label: string;
+  name: string;
+  defaultChecked?: boolean;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+      <input name={name} type="checkbox" defaultChecked={defaultChecked} />
+      {label}
+    </label>
+  );
+}
+
 export function HomepageSettingsForm({ settings }: { settings: HomepageSettings }) {
   return (
     <form action={updateHomepageSettingsAction} className="card-surface space-y-8 p-6 xl:col-span-2">
@@ -106,6 +123,35 @@ export function HomepageSettingsForm({ settings }: { settings: HomepageSettings 
                 <TextArea label="Body" name={`style_cards_${index}_body`} defaultValue={card.body} rows={2} />
                 <Field label="Vehicle text" name={`style_cards_${index}_vehicle`} defaultValue={card.vehicle} />
                 <Field label="Search smart value" name={`style_cards_${index}_smart`} defaultValue={card.smart} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-lg font-black text-ink">Quick need cards</h3>
+        <p className="text-sm leading-6 text-slate-500">
+          These cards power the homepage section “Bạn cần chuyến xe như thế nào?”. They send users to search with a smart priority such as overnight, family, value, pickup, wc, or border.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {settings.smartSuggestions.map((item, index) => (
+            <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Need card {index + 1}</p>
+              <div className="grid gap-3">
+                <input type="hidden" name={`smart_${index}_id`} value={item.id} />
+                <Field label="Title" name={`smart_${index}_title`} defaultValue={item.title} />
+                <TextArea label="Description" name={`smart_${index}_description`} defaultValue={item.description} rows={2} />
+                <Field label="Search link" name={`smart_${index}_href`} defaultValue={item.href} />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field label="Icon" name={`smart_${index}_icon`} defaultValue={item.icon} />
+                  <Field label="Color" name={`smart_${index}_color`} defaultValue={item.color} />
+                  <Field label="Order" name={`smart_${index}_displayOrder`} defaultValue={String(item.displayOrder)} />
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <CheckboxField label="Enabled" name={`smart_${index}_enabled`} defaultChecked={item.enabled} />
+                  <CheckboxField label="Show on homepage" name={`smart_${index}_showOnHomepage`} defaultChecked={item.showOnHomepage} />
+                </div>
               </div>
             </div>
           ))}

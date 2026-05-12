@@ -4,19 +4,21 @@ import { BrandingSettingsForm } from "@/components/admin/BrandingSettingsForm";
 import { FooterSettingsForm } from "@/components/admin/FooterSettingsForm";
 import { HomepageSettingsForm } from "@/components/admin/HomepageSettingsForm";
 import { SearchUiLabelsForm } from "@/components/admin/SearchUiLabelsForm";
-import { getBrandingSettings, getFooterSettings, getHomepageSettings, getSearchUiLabels } from "@/lib/site-settings";
+import { VehiclePageSettingsForm } from "@/components/admin/VehiclePageSettingsForm";
+import { getBrandingSettings, getFooterSettings, getHomepageSettings, getSearchUiLabels, getVehiclePageSettings } from "@/lib/site-settings";
 
 export default async function AdminContentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ brandingSaved?: string; labelsSaved?: string; homepageSaved?: string; footerSaved?: string; error?: string }>;
+  searchParams: Promise<{ brandingSaved?: string; labelsSaved?: string; homepageSaved?: string; footerSaved?: string; vehiclePageSaved?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const [branding, labels, homepage, footer] = await Promise.all([
+  const [branding, labels, homepage, footer, vehiclePage] = await Promise.all([
     getBrandingSettings(),
     getSearchUiLabels(),
     getHomepageSettings(),
     getFooterSettings(),
+    getVehiclePageSettings(),
   ]);
 
   return (
@@ -38,15 +40,18 @@ export default async function AdminContentPage({
       {params.labelsSaved ? <ActionMessage type="success" message="Search UI labels updated." /> : null}
       {params.homepageSaved ? <ActionMessage type="success" message="Homepage content updated." /> : null}
       {params.footerSaved ? <ActionMessage type="success" message="Footer content updated." /> : null}
+      {params.vehiclePageSaved ? <ActionMessage type="success" message="Vehicle page settings updated." /> : null}
       {params.error === "migrate-site-settings" ? <ActionMessage type="error" message="Database chưa có bảng Website Content mới. Hãy chạy `npx prisma migrate dev` và `npx prisma db seed`, rồi thử lưu lại." /> : null}
       {params.error === "branding-save-failed" ? <ActionMessage type="error" message="Không thể lưu branding lúc này. Kiểm tra lại database rồi thử lại." /> : null}
       {params.error === "labels-save-failed" ? <ActionMessage type="error" message="Không thể lưu UI labels lúc này. Kiểm tra lại database rồi thử lại." /> : null}
       {params.error === "homepage-save-failed" ? <ActionMessage type="error" message="Không thể lưu homepage content lúc này. Kiểm tra lại database rồi thử lại." /> : null}
       {params.error === "footer-save-failed" ? <ActionMessage type="error" message="Không thể lưu footer content lúc này. Kiểm tra lại database rồi thử lại." /> : null}
+      {params.error === "vehicle-page-save-failed" ? <ActionMessage type="error" message="Không thể lưu vehicle page settings lúc này. Kiểm tra lại database rồi thử lại." /> : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
         <HomepageSettingsForm settings={homepage} />
         <FooterSettingsForm settings={footer} />
+        <VehiclePageSettingsForm settings={vehiclePage} />
         <BrandingSettingsForm settings={branding} />
         <SearchUiLabelsForm labels={labels} />
       </div>

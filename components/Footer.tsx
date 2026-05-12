@@ -10,14 +10,14 @@ const footerGroups = {
   vi: [
     { title: "Về VNBus", links: [["Giới thiệu", "/contact"], ["Tuyển dụng", "/contact"], ["Điều khoản sử dụng", "/faq"], ["Chính sách bảo mật", "/faq"], ["Quy chế hoạt động", "/faq"]] },
     { title: "Hỗ trợ", links: [["Trung tâm trợ giúp", "/faq"], ["Hướng dẫn đặt vé", "/faq"], ["Hướng dẫn thanh toán", "/faq"], ["Chính sách đổi trả", "/faq"], ["Liên hệ hỗ trợ", "/contact"]] },
-    { title: "Tuyến xe phổ biến", links: [["Hà Nội - Sapa", "/search?from=ha-noi&to=sapa"], ["Hà Nội - Hạ Long", "/search?from=ha-noi&to=ha-long"], ["Đà Nẵng - Hội An", "/search?from=da-nang&to=hoi-an"], ["TP. HCM - Đà Lạt", "/search?from=ho-chi-minh&to=da-lat"], ["TP. HCM - Vũng Tàu", "/search?from=ho-chi-minh&to=vung-tau"]] },
-    { title: "Loại xe", links: [["Cabin đôi", "/vehicles"], ["Cabin đơn", "/vehicles"], ["Giường VIP", "/vehicles"], ["Ghế ngồi", "/vehicles"], ["Limousine", "/vehicles"]] },
+    { title: "Dành cho nhà xe", links: [["Đăng ký bán vé", "/contact"], ["Dashboard nhà xe", "/admin/login"], ["Chính sách đối tác", "/faq"], ["Quảng bá ưu đãi", "/offers"]] },
+    { title: "Tuyến phổ biến", links: [["TP.HCM - Đà Lạt", "/search?from=ho-chi-minh&to=da-lat"], ["Hà Nội - Sapa", "/search?from=ha-noi&to=sapa"], ["Huế - Phong Nha", "/search?from=hue&to=phong-nha"], ["Đà Nẵng - Hội An", "/search?from=da-nang&to=hoi-an"]] },
   ],
   en: [
     { title: "About VNBus", links: [["About us", "/contact"], ["Careers", "/contact"], ["Terms of use", "/faq"], ["Privacy policy", "/faq"], ["Operating rules", "/faq"]] },
     { title: "Support", links: [["Help center", "/faq"], ["Booking guide", "/faq"], ["Payment guide", "/faq"], ["Change policy", "/faq"], ["Contact support", "/contact"]] },
-    { title: "Popular routes", links: [["Hanoi - Sapa", "/search?from=ha-noi&to=sapa"], ["Hanoi - Ha Long", "/search?from=ha-noi&to=ha-long"], ["Da Nang - Hoi An", "/search?from=da-nang&to=hoi-an"], ["HCMC - Da Lat", "/search?from=ho-chi-minh&to=da-lat"], ["HCMC - Vung Tau", "/search?from=ho-chi-minh&to=vung-tau"]] },
-    { title: "Vehicle types", links: [["Double cabin", "/vehicles"], ["Single cabin", "/vehicles"], ["VIP sleeper", "/vehicles"], ["Seat coach", "/vehicles"], ["Limousine", "/vehicles"]] },
+    { title: "For operators", links: [["Start selling", "/contact"], ["Operator dashboard", "/admin/login"], ["Partner policy", "/faq"], ["Promote offers", "/offers"]] },
+    { title: "Popular routes", links: [["HCMC - Da Lat", "/search?from=ho-chi-minh&to=da-lat"], ["Hanoi - Sapa", "/search?from=ha-noi&to=sapa"], ["Hue - Phong Nha", "/search?from=hue&to=phong-nha"], ["Da Nang - Hoi An", "/search?from=da-nang&to=hoi-an"]] },
   ],
   ko: [
     { title: "VNBus 소개", links: [["소개", "/contact"], ["채용", "/contact"], ["이용 약관", "/faq"], ["개인정보 정책", "/faq"], ["운영 규정", "/faq"]] },

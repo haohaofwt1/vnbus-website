@@ -21,6 +21,7 @@ export async function createVehicleTypeAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/search");
+  revalidatePath("/vehicles");
   revalidatePath("/admin/vehicles");
   redirect(`/admin/vehicles/${vehicleType.id}/edit?saved=1`);
 }
@@ -45,6 +46,7 @@ export async function updateVehicleTypeAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/search");
+  revalidatePath("/vehicles");
   revalidatePath("/admin/vehicles");
   redirect(`/admin/vehicles/${id}/edit?saved=1`);
 }
