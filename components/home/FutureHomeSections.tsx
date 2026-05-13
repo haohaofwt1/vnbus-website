@@ -24,7 +24,7 @@ import type {
   HomeVehicleExperience,
 } from "@/lib/future-home-data";
 import { formatCurrency } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n";
+import { type Locale, withLang } from "@/lib/i18n";
 
 const sectionCopy = {
   vi: {
@@ -108,7 +108,7 @@ export function IntentSection({ items, locale }: { items: HomeIntent[]; locale: 
               const Icon = intentIcons[item.id as keyof typeof intentIcons] ?? Baby;
               const localized = intentCopy[locale === "en" ? "en" : "vi"][item.id as keyof typeof intentCopy.vi] ?? item;
               return (
-                <Link key={item.id} href={item.href} className="group grid min-w-0 grid-cols-[48px_minmax(0,1fr)] gap-3 rounded-2xl border border-[#E5EAF2] bg-white p-3 transition hover:-translate-y-0.5 hover:shadow-soft">
+                <Link key={item.id} href={withLang(item.href, locale)} className="group grid min-w-0 grid-cols-[48px_minmax(0,1fr)] gap-3 rounded-2xl border border-[#E5EAF2] bg-white p-3 transition hover:-translate-y-0.5 hover:shadow-soft">
                   <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${toneClasses[item.tone]}`}>
                     <Icon className="h-6 w-6" />
                   </span>

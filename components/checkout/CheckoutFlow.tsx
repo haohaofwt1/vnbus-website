@@ -21,6 +21,9 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+import type { Locale } from "@/lib/i18n";
+import { getRouteLabel } from "@/lib/i18n";
+import { getCheckoutFlowCopy } from "@/lib/public-locale-copy";
 import type { PaymentSettings } from "@/lib/site-settings";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 
@@ -39,6 +42,7 @@ type CheckoutTrip = {
 };
 
 type CheckoutFlowProps = {
+  locale: Locale;
   trip: CheckoutTrip;
   paymentSettings: PaymentSettings;
   defaults: {
@@ -61,14 +65,15 @@ type AppliedPromotion = {
   label: string | null;
 };
 
-const steps = ["Trip details", "Passenger info", "Payment"];
-
 export function CheckoutFlow({
+  locale,
   trip,
   defaults,
   paymentSettings,
   initialPromotion = null,
 }: CheckoutFlowProps) {
+  const t = getCheckoutFlowCopy(locale);
+  const steps = t.steps;
   const [step, setStep] = useState<Step>(1);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -104,7 +109,7 @@ export function CheckoutFlow({
     [form.passengerCount, trip.price],
   );
   const total = promo ? promo.finalAmount : subtotal;
-  const routeLabel = `${trip.route.fromCity.name} to ${trip.route.toCity.name}`;
+  const routeLabel = getRouteLabel(trip.route.fromCity.name, trip.route.toCity.name, locale);
   const canContinueTrip =
     form.departureDate &&
     form.passengerCount > 0 &&
@@ -131,7 +136,7 @@ export function CheckoutFlow({
   const applyPromo = async () => {
     const code = promoCode.trim();
     if (!code) {
-      setPromoError("Enter a promo code.");
+      setPromoError(t.promoEnter);
       return;
     }
 
@@ -156,7 +161,7 @@ export function CheckoutFlow({
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error || "Could not apply promo code.");
+        throw new Error(payload.error || t.promoApplyFail);
       }
 
       setPromo({
@@ -168,7 +173,7 @@ export function CheckoutFlow({
       setPromoCode(payload.code);
     } catch (caught) {
       setPromo(null);
-      setPromoError(caught instanceof Error ? caught.message : "Could not apply promo code.");
+      setPromoError(caught instanceof Error ? caught.message : t.promoApplyFail);
     } finally {
       setPromoApplying(false);
     }
@@ -193,12 +198,12 @@ export function CheckoutFlow({
 
       if (!response.ok) {
         const payload = await response.json();
-        throw new Error(payload.error || "Could not remove promo code.");
+        throw new Error(payload.error || t.promoRemoveFail);
       }
     } catch (caught) {
       setPromo(previous);
       setPromoCode(previous.code);
-      setPromoError(caught instanceof Error ? caught.message : "Could not remove promo code.");
+      setPromoError(caught instanceof Error ? caught.message : t.promoRemoveFail);
     }
   };
 
@@ -231,7 +236,7 @@ export function CheckoutFlow({
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error || "Could not create booking.");
+        throw new Error(payload.error || t.createBookingFail);
       }
 
       setBookingId(payload.bookingRequestId);
@@ -245,7 +250,7 @@ export function CheckoutFlow({
       }
       setStep(3);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not create booking.");
+      setError(caught instanceof Error ? caught.message : t.createBookingFail);
     } finally {
       setSubmitting(false);
     }
@@ -253,7 +258,7 @@ export function CheckoutFlow({
 
   const pay = async () => {
     if (!bookingId) {
-      setError("Create the booking before payment.");
+      setError(t.payBeforeCreate);
       return;
     }
 
@@ -272,17 +277,17 @@ export function CheckoutFlow({
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingRequestId: bookingId, provider }),
+        body: JSON.stringify({ bookingRequestId: bookingId, provider, lang: defaults.lang }),
       });
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error || "Could not start payment.");
+        throw new Error(payload.error || t.payStartFail);
       }
 
-      window.location.href = payload.checkoutUrl;
+      window.location.assign(payload.checkoutUrl);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not start payment.");
+      setError(caught instanceof Error ? caught.message : t.payStartFail);
       setSubmitting(false);
     }
   };
@@ -294,9 +299,9 @@ export function CheckoutFlow({
           <div className="grid gap-0 lg:grid-cols-[1fr_360px]">
             <div className="p-5 sm:p-7">
               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
-                <span className="rounded-full bg-brand-50 px-3 py-1">Instant booking</span>
+                <span className="rounded-full bg-brand-50 px-3 py-1">{t.instantBooking}</span>
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
-                  {trip.availableSeats} seats available
+                  {t.seatsAvailable.replace("{n}", String(trip.availableSeats))}
                 </span>
               </div>
               <h1 className="mt-4 font-[family-name:var(--font-heading)] text-3xl font-bold tracking-tight text-ink sm:text-4xl">
@@ -304,7 +309,7 @@ export function CheckoutFlow({
               </h1>
               <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
                 <Station
-                  label="Departure"
+                  label={t.departure}
                   time={formatTime(trip.departureTime)}
                   city={trip.route.fromCity.name}
                   point={trip.pickupPoint}
@@ -312,7 +317,7 @@ export function CheckoutFlow({
                 <div className="hidden h-px bg-slate-200 md:block" />
                 <Station
                   align="right"
-                  label="Arrival"
+                  label={t.arrival}
                   time={formatTime(trip.arrivalTime)}
                   city={trip.route.toCity.name}
                   point={trip.dropoffPoint}
@@ -320,12 +325,12 @@ export function CheckoutFlow({
               </div>
             </div>
             <div className="border-t border-slate-200 bg-slate-950 p-5 text-white lg:border-l lg:border-t-0 sm:p-7">
-              <p className="text-sm text-slate-300">Operated by</p>
+              <p className="text-sm text-slate-300">{t.operatedBy}</p>
               <p className="mt-1 text-2xl font-bold">{trip.operator.name}</p>
               <div className="mt-5 grid gap-3 text-sm text-slate-200">
-                <TrustRow icon={<TicketCheck className="h-4 w-4" />} text="E-ticket delivered after payment" />
-                <TrustRow icon={<ShieldCheck className="h-4 w-4" />} text="Secure checkout" />
-                <TrustRow icon={<Mail className="h-4 w-4" />} text="Confirmation sent instantly" />
+                <TrustRow icon={<TicketCheck className="h-4 w-4" />} text={t.trustEticket} />
+                <TrustRow icon={<ShieldCheck className="h-4 w-4" />} text={t.trustSecure} />
+                <TrustRow icon={<Mail className="h-4 w-4" />} text={t.trustConfirm} />
               </div>
             </div>
           </div>
@@ -351,7 +356,7 @@ export function CheckoutFlow({
                       }`}
                     >
                       <p className="text-xs font-semibold uppercase tracking-[0.14em]">
-                        Step {number}
+                        {t.stepPrefix} {number}
                       </p>
                       <p className="mt-1 font-semibold">{label}</p>
                     </div>
@@ -367,9 +372,9 @@ export function CheckoutFlow({
             ) : null}
 
             {step === 1 ? (
-              <Panel title="Choose your trip details" subtitle="No payment required until the final step.">
+              <Panel title={t.panel1Title} subtitle={t.panel1Subtitle}>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Departure date" icon={<CalendarDays className="h-4 w-4" />}>
+                  <Field label={t.departureDate} icon={<CalendarDays className="h-4 w-4" />}>
                     <input
                       type="date"
                       value={form.departureDate}
@@ -378,7 +383,7 @@ export function CheckoutFlow({
                       required
                     />
                   </Field>
-                  <Field label="Return date (optional)" icon={<CalendarDays className="h-4 w-4" />}>
+                  <Field label={t.returnDate} icon={<CalendarDays className="h-4 w-4" />}>
                     <input
                       type="date"
                       value={form.returnDate}
@@ -386,7 +391,7 @@ export function CheckoutFlow({
                       className="checkout-input"
                     />
                   </Field>
-                  <Field label="Passengers" icon={<Users className="h-4 w-4" />}>
+                  <Field label={t.passengers} icon={<Users className="h-4 w-4" />}>
                     <input
                       type="number"
                       min={1}
@@ -396,7 +401,7 @@ export function CheckoutFlow({
                       className="checkout-input"
                     />
                   </Field>
-                  <Field label="Vehicle / seat type" icon={<TicketCheck className="h-4 w-4" />}>
+                  <Field label={t.vehicleSeat} icon={<TicketCheck className="h-4 w-4" />}>
                     <select
                       value={form.vehicleType}
                       onChange={(event) => update("vehicleType", event.target.value)}
@@ -408,35 +413,35 @@ export function CheckoutFlow({
                 </div>
                 <div className="mt-6">
                   <button disabled={!canContinueTrip} onClick={() => setStep(2)} className="checkout-primary">
-                    Continue
+                    {t.continue}
                   </button>
                 </div>
               </Panel>
             ) : null}
 
             {step === 2 ? (
-              <Panel title="Passenger information" subtitle="Use the same details you want on the ticket and receipt.">
+              <Panel title={t.panel2Title} subtitle={t.panel2Subtitle}>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Full name" icon={<UserRound className="h-4 w-4" />}>
+                  <Field label={t.fullName} icon={<UserRound className="h-4 w-4" />}>
                     <input
                       autoComplete="name"
                       value={form.customerName}
                       onChange={(event) => update("customerName", event.target.value)}
-                      placeholder="As shown on your ticket"
+                      placeholder={t.namePlaceholder}
                       className="checkout-input"
                     />
                   </Field>
-                  <Field label="Email" icon={<Mail className="h-4 w-4" />}>
+                  <Field label={t.email} icon={<Mail className="h-4 w-4" />}>
                     <input
                       type="email"
                       autoComplete="email"
                       value={form.customerEmail}
                       onChange={(event) => update("customerEmail", event.target.value)}
-                      placeholder="you@example.com"
+                      placeholder={t.emailPlaceholder}
                       className="checkout-input"
                     />
                   </Field>
-                  <Field label="Phone" icon={<Smartphone className="h-4 w-4" />}>
+                  <Field label={t.phone} icon={<Smartphone className="h-4 w-4" />}>
                     <input
                       type="tel"
                       autoComplete="tel"
@@ -445,41 +450,41 @@ export function CheckoutFlow({
                       className="checkout-input"
                     />
                   </Field>
-                  <Field label="Optional notes" icon={<MapPin className="h-4 w-4" />}>
+                  <Field label={t.optionalNotes} icon={<MapPin className="h-4 w-4" />}>
                     <textarea
                       rows={3}
                       value={form.notes}
                       onChange={(event) => update("notes", event.target.value)}
-                      placeholder="Pickup note, luggage, special requests"
+                      placeholder={t.notesPlaceholder}
                       className="checkout-input"
                     />
                   </Field>
                 </div>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <button onClick={() => setStep(1)} className="checkout-secondary">
-                    <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                    <ChevronLeft className="mr-2 h-4 w-4" /> {t.back}
                   </button>
                   <button
                     disabled={!canContinuePassenger || submitting}
                     onClick={createBooking}
                     className="checkout-primary"
                   >
-                    {submitting ? "Saving..." : "Continue to payment"}
+                    {submitting ? t.saving : t.continuePayment}
                   </button>
                 </div>
               </Panel>
             ) : null}
 
             {step === 3 ? (
-              <Panel title="Payment" subtitle="Your payment is protected and the final price is shown before redirect.">
+              <Panel title={t.panel3Title} subtitle={t.panel3Subtitle}>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {paymentSettings.stripeEnabled ? (
                     <PaymentOption
                       active={provider === "STRIPE"}
                       icon={<CreditCard className="h-5 w-5" />}
-                      title="Card payment"
-                      body="Visa, Mastercard, Apple Pay, Google Pay when available"
-                      badge="Encrypted by Stripe"
+                      title={t.payCardTitle}
+                      body={t.payCardBody}
+                      badge={t.payCardBadge}
                       onClick={() => setProvider("STRIPE")}
                     />
                   ) : null}
@@ -487,9 +492,9 @@ export function CheckoutFlow({
                     <PaymentOption
                       active={provider === "VNPAY"}
                       icon={<Landmark className="h-5 w-5" />}
-                      title="VNPay"
-                      body="Pay with Vietnam bank app or domestic card"
-                      badge="Redirect payment"
+                      title={t.payVnpayTitle}
+                      body={t.payVnpayBody}
+                      badge={t.payVnpayBadge}
                       onClick={() => setProvider("VNPAY")}
                     />
                   ) : null}
@@ -497,9 +502,9 @@ export function CheckoutFlow({
                     <PaymentOption
                       active={provider === "BANK_TRANSFER"}
                       icon={<QrCode className="h-5 w-5" />}
-                      title="Bank transfer QR"
-                      body="Scan QR and admin confirms after transfer"
-                      badge="Manual confirmation"
+                      title={t.payBankTitle}
+                      body={t.payBankBody}
+                      badge={t.payBankBadge}
                       onClick={() => setProvider("BANK_TRANSFER")}
                     />
                   ) : null}
@@ -507,9 +512,9 @@ export function CheckoutFlow({
                     <PaymentOption
                       active={provider === "TEST"}
                       icon={<BadgeCheck className="h-5 w-5" />}
-                      title="Test payment"
-                      body="Mark this booking as paid for local testing"
-                      badge="Dev only"
+                      title={t.payTestTitle}
+                      body={t.payTestBody}
+                      badge={t.payTestBadge}
                       onClick={() => setProvider("TEST")}
                     />
                   ) : null}
@@ -517,23 +522,23 @@ export function CheckoutFlow({
 
                 {!hasPaymentMethod ? (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
-                    No payment method is enabled. Turn on a provider in Admin Payments settings.
+                    {t.noPaymentMethod}
                   </div>
                 ) : null}
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <Policy icon={<LockKeyhole className="h-4 w-4" />} title="Secure payment" />
-                  <Policy icon={<BadgeCheck className="h-4 w-4" />} title="No hidden fees" />
-                  <Policy icon={<CheckCircle2 className="h-4 w-4" />} title="Instant confirmation" />
+                  <Policy icon={<LockKeyhole className="h-4 w-4" />} title={t.policySecure} />
+                  <Policy icon={<BadgeCheck className="h-4 w-4" />} title={t.policyNoFees} />
+                  <Policy icon={<CheckCircle2 className="h-4 w-4" />} title={t.policyInstant} />
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                  You will receive confirmation instantly after payment. Your ticket and receipt will be sent to {form.customerEmail || "your email"}.
+                  {t.afterPayNote.replace("{email}", form.customerEmail || t.emailIfMissing)}
                 </div>
 
                 <div className="mt-6">
                   <button disabled={submitting || !hasPaymentMethod} onClick={pay} className="checkout-primary checkout-pay-button">
-                    {submitting ? "Redirecting..." : `Pay ${formatCurrency(total, trip.currency)}`}
+                    {submitting ? t.redirecting : `${t.payPrefix} ${formatCurrency(total, trip.currency)}`}
                   </button>
                 </div>
               </Panel>
@@ -544,39 +549,43 @@ export function CheckoutFlow({
             <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
               <div className="border-b border-slate-200 bg-slate-50 p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
-                  Booking summary
+                  {t.summaryTitle}
                 </p>
                 <h2 className="mt-2 text-xl font-bold text-ink">{routeLabel}</h2>
               </div>
               <div className="space-y-4 p-5 text-sm text-slate-600">
-                <Summary icon={<CalendarDays className="h-4 w-4" />} label="Date" value={formatDate(form.departureDate)} />
-                <Summary icon={<Clock3 className="h-4 w-4" />} label="Time" value={formatTime(trip.departureTime)} />
-                <Summary icon={<Users className="h-4 w-4" />} label="Passengers" value={String(form.passengerCount)} />
-                <Summary icon={<TicketCheck className="h-4 w-4" />} label="Seat type" value={form.vehicleType} />
-                <Summary label="Operator" value={trip.operator.name} />
-                <Summary label="Pickup" value={trip.pickupPoint} />
-                <Summary label="Drop-off" value={trip.dropoffPoint} />
+                <Summary icon={<CalendarDays className="h-4 w-4" />} label={t.date} value={formatDate(form.departureDate)} />
+                <Summary icon={<Clock3 className="h-4 w-4" />} label={t.time} value={formatTime(trip.departureTime)} />
+                <Summary icon={<Users className="h-4 w-4" />} label={t.passengers} value={String(form.passengerCount)} />
+                <Summary icon={<TicketCheck className="h-4 w-4" />} label={t.seatType} value={form.vehicleType} />
+                <Summary label={t.operator} value={trip.operator.name} />
+                <Summary label={t.pickup} value={trip.pickupPoint} />
+                <Summary label={t.dropoff} value={trip.dropoffPoint} />
               </div>
               <div className="border-t border-slate-200 p-5">
                 <div className="flex items-center justify-between text-sm text-slate-500">
                   <span>
                     {formatCurrency(trip.price, trip.currency)} x {form.passengerCount}
                   </span>
-                  <span>No hidden fees</span>
+                  <span>{t.noHiddenFees}</span>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                     <Tag className="h-4 w-4 text-brand-600" />
-                    <span>Promo code</span>
+                    <span>{t.promoCode}</span>
                   </div>
                   {promo ? (
                     <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm">
                       <div>
-                        <p className="font-bold text-emerald-700">{promo.code} applied</p>
-                        <p className="text-slate-500">Saved {formatCurrency(promo.discountAmount, trip.currency)}</p>
+                        <p className="font-bold text-emerald-700">
+                          {promo.code} {t.promoApplied}
+                        </p>
+                        <p className="text-slate-500">
+                          {t.promoSaved} {formatCurrency(promo.discountAmount, trip.currency)}
+                        </p>
                       </div>
-                      <button type="button" onClick={removePromo} className="rounded-full p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-label="Remove promo code">
+                      <button type="button" onClick={removePromo} className="rounded-full p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-label={t.removePromoAria}>
                         <X className="h-4 w-4" />
                       </button>
                     </div>
@@ -588,11 +597,11 @@ export function CheckoutFlow({
                           setPromoCode(event.target.value);
                           setPromoError(null);
                         }}
-                        placeholder="Enter code"
+                        placeholder={t.enterCode}
                         className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
                       />
                       <button type="button" onClick={applyPromo} disabled={promoApplying} className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">
-                        {promoApplying ? "Checking" : "Apply"}
+                        {promoApplying ? t.checking : t.apply}
                       </button>
                     </div>
                   )}
@@ -601,18 +610,18 @@ export function CheckoutFlow({
 
                 <div className="mt-4 space-y-2 text-sm text-slate-600">
                   <div className="flex items-center justify-between">
-                    <span>Subtotal</span>
+                    <span>{t.subtotal}</span>
                     <span>{formatCurrency(subtotal, trip.currency)}</span>
                   </div>
                   {promo ? (
                     <div className="flex items-center justify-between text-emerald-700">
-                      <span>Discount</span>
+                      <span>{t.discount}</span>
                       <span>-{formatCurrency(promo.discountAmount, trip.currency)}</span>
                     </div>
                   ) : null}
                 </div>
                 <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 text-2xl font-bold text-ink">
-                  <span>Total</span>
+                  <span>{t.total}</span>
                   <span>{formatCurrency(total, trip.currency)}</span>
                 </div>
               </div>

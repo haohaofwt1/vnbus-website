@@ -26,22 +26,24 @@ import {
 import type { HomeLocationOption, HomeVehicleOption } from "@/lib/future-home-data";
 import type { Locale } from "@/lib/i18n";
 
+/** Web Speech API: mỗi result có nhiều alternative khi maxAlternatives > 1 */
+type SpeechRecognitionChunk = {
+  length: number;
+  [index: number]: { transcript: string; confidence?: number };
+};
+
 type SpeechRecognitionEvent = Event & {
-  results: {
-    [index: number]: {
-      [index: number]: {
-        transcript: string;
-      };
-    };
-  };
+  results: ArrayLike<SpeechRecognitionChunk>;
 };
 
 type SpeechRecognitionCtor = new () => {
   lang: string;
+  continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
   start: () => void;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onend: (() => void) | null;
   onerror: (() => void) | null;
 };
 
@@ -74,6 +76,8 @@ const heroCopy = {
     listening: "Đang nghe...",
     voiceDone: "Đã nhận giọng nói",
     voiceError: "Không nhận được giọng nói, hãy thử lại",
+    voiceTip:
+      "Mẹo: nói «từ Huế đến Phong Nha» hoặc «Huế tới Phong Nha» — rõ hơn câu chỉ có «đi».",
     stats: [
       { title: "Nhiều lựa chọn", value: "2000+ nhà xe", icon: ShieldCheck },
       { title: "Giá tốt mỗi ngày", value: "Ưu đãi tự động áp dụng", icon: Tags },
@@ -102,6 +106,8 @@ const heroCopy = {
     listening: "Listening...",
     voiceDone: "Voice captured",
     voiceError: "Could not capture voice, please try again",
+    voiceTip:
+      "Tip: say «from Hue to Phong Nha» — clearer than a single short phrase for the mic.",
     stats: [
       { title: "More choices", value: "2000+ operators", icon: ShieldCheck },
       { title: "Daily fair prices", value: "Deals applied automatically", icon: Tags },
@@ -158,6 +164,55 @@ function normalizeText(value: string) {
     .trim();
 }
 
+/** Strip common STT / spoken filler so route regexes match reliably. */
+function sanitizeForRouteParsing(normalized: string) {
+  let s = normalized.replace(/\s+/g, " ").trim();
+  const noisePrefixes = [
+    /^toi muon\s+/,
+    /^tui muon\s+/,
+    /^cho toi\s+/,
+    /^xin\s+/,
+    /^hay\s+/,
+    /^ok\s+/,
+    /^tim kiem\s+/,
+    /^tim chuyen\s+/,
+    /^tim ve\s+/,
+    /^dat ve\s+/,
+    /^mua ve\s+/,
+    /^goi giup toi\s+/,
+    /^tu van\s+/,
+  ];
+  for (const re of noisePrefixes) {
+    s = s.replace(re, "");
+  }
+  // Tiếng đệm STT tiếng Việt (hay nuốt chữ đầu như "Huế")
+  const fillerPrefixes = [
+    /^vay thi\s+/,
+    /^vay la\s+/,
+    /^the la\s+/,
+    /^tuc la\s+/,
+    /^noi la\s+/,
+    /^cu the la\s+/,
+    /^o thi\s+/,
+    /^a thi\s+/,
+    /^thua\s+/,
+    /^thua ban\s+/,
+    /^dong y\s+/,
+    /^dung roi\s+/,
+    /^roi\s+/,
+    /^um\s+/,
+  ];
+  for (const re of fillerPrefixes) {
+    s = s.replace(re, "");
+  }
+  // "vé đi Phong Nha" → STT often outputs "ve di ..." — drop misleading "vé"
+  s = s.replace(/^ve\s+di\s+/, "di ");
+  s = s.replace(/^ve\s+den\s+/, "den ");
+  s = s.replace(/^ve\s+toi\s+/, "toi ");
+  s = s.replace(/^tim\s+ve\s+/, "");
+  return s.trim();
+}
+
 function buildSearchUrl(params: Record<string, string>) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -188,11 +243,79 @@ function resolveLocationSlug(value: string, locations: HomeLocationOption[]) {
   return matched?.slug ?? value;
 }
 
+function isKnownLocationSlug(slug: string, locations: HomeLocationOption[]) {
+  if (!slug || slug.trim() === "") return false;
+  const resolved = resolveLocationSlug(slug, locations);
+  return locations.some((loc) => loc.slug === resolved);
+}
+
+function buildLocationCandidates(locations: HomeLocationOption[]) {
+  const list: Array<{ label: string; slug: string }> = [];
+  for (const location of locations) {
+    const name = normalizeText(location.name);
+    if (name.length >= 2) list.push({ label: name, slug: location.slug });
+    const slugWords = normalizeText(location.slug.replace(/-/g, " "));
+    if (slugWords.length >= 2) list.push({ label: slugWords, slug: location.slug });
+  }
+  for (const [label, slug] of Object.entries(cityAliases)) {
+    const n = normalizeText(label);
+    if (n.length >= 2) list.push({ label: n, slug });
+  }
+  const seen = new Set<string>();
+  return list.filter((item) => {
+    const key = `${item.slug}:${item.label}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
+ * Find known cities in order (non-overlapping, longest match first at each position).
+ * Handles STT that drops "Huế" or mis-hears "vé đi …" so we still get a valid destination.
+ */
+function findOrderedLocationSlugs(normalized: string, locations: HomeLocationOption[]) {
+  const candidates = buildLocationCandidates(locations).sort((a, b) => b.label.length - a.label.length);
+  const hits: Array<{ start: number; end: number; slug: string }> = [];
+
+  for (const c of candidates) {
+    if (c.label.length < 2) continue;
+    let from = 0;
+    while (from < normalized.length) {
+      const idx = normalized.indexOf(c.label, from);
+      if (idx === -1) break;
+      const leftOk = idx === 0 || normalized[idx - 1] === " ";
+      const end = idx + c.label.length;
+      const rightOk = end >= normalized.length || normalized[end] === " ";
+      if (leftOk && rightOk) {
+        hits.push({ start: idx, end, slug: c.slug });
+      }
+      from = idx + 1;
+    }
+  }
+
+  hits.sort((a, b) => a.start - b.start || b.end - a.end - (a.end - a.start));
+
+  const picked: typeof hits = [];
+  let coverUntil = -1;
+  for (const h of hits) {
+    if (h.start < coverUntil) continue;
+    picked.push(h);
+    coverUntil = h.end;
+  }
+
+  const orderedSlugs: string[] = [];
+  for (const h of picked) {
+    if (orderedSlugs[orderedSlugs.length - 1] !== h.slug) orderedSlugs.push(h.slug);
+  }
+  return orderedSlugs;
+}
+
 function findLocationInText(text: string, locations: HomeLocationOption[]) {
   const normalized = normalizeText(text);
   const candidates = [
     ...locations.map((location) => ({ label: normalizeText(location.name), slug: location.slug })),
-    ...locations.map((location) => ({ label: normalizeText(location.slug), slug: location.slug })),
+    ...locations.map((location) => ({ label: normalizeText(location.slug.replace(/-/g, " ")), slug: location.slug })),
     ...Object.entries(cityAliases).map(([label, slug]) => ({ label: normalizeText(label), slug })),
   ].sort((left, right) => right.label.length - left.label.length);
 
@@ -222,40 +345,187 @@ function parseDateFromText(text: string) {
 }
 
 function parseNaturalSearch(text: string, locations: HomeLocationOption[]) {
-  const normalized = normalizeText(text);
-  const params: Record<string, string> = { q: text };
-  const routeMatch = normalized.match(/tu\s+(.+?)\s+(?:den|toi|di)\s+(.+?)(?:\s+ngay|\s+hom|\s+\d|\s+\d+\s*(?:nguoi|khach)|\s+cabin|\s+giuong|\s+limousine|$)/);
+  const rawNormalized = normalizeText(text);
+  const normalized = sanitizeForRouteParsing(rawNormalized);
+  const params: Record<string, string> = {};
 
-  if (routeMatch) {
-    params.from = resolveLocationSlug(routeMatch[1], locations);
-    params.to = resolveLocationSlug(routeMatch[2], locations);
-  } else {
-    const looseRoute = normalized.match(/(.+?)\s+(?:di|den|toi)\s+(.+?)(?:\s+ngay|\s+hom|\s+\d|\s+\d+\s*(?:nguoi|khach)|\s+cabin|\s+giuong|\s+limousine|$)/);
-    if (looseRoute) {
-      params.from = resolveLocationSlug(looseRoute[1], locations);
-      params.to = resolveLocationSlug(looseRoute[2], locations);
-    }
+  const routeEnd = String.raw`(?:\s+ngay|\s+hom|\s+mai|\s+tomorrow|\s+today|\s+\d|\s+\d+\s*(?:nguoi|khach|hanh\s*khach)|\s+cabin|\s+giuong|\s+limousine|$)`;
+
+  function tryAssignRoute(fromRaw: string, toRaw: string) {
+    const fromSlug = resolveLocationSlug(fromRaw.trim(), locations);
+    const toSlug = resolveLocationSlug(toRaw.trim(), locations);
+    if (isKnownLocationSlug(fromSlug, locations)) params.from = fromSlug;
+    if (isKnownLocationSlug(toSlug, locations)) params.to = toSlug;
+  }
+
+  const tuDen = normalized.match(
+    new RegExp(`^tu\\s+(.+?)\\s+(?:den|toi|di)\\s+(.+?)${routeEnd}`, "i"),
+  );
+  const looseRoute = normalized.match(
+    new RegExp(`^(.+?)\\s+(?:di|den|toi)\\s+(.+?)${routeEnd}`, "i"),
+  );
+  const denTu = normalized.match(/^den\s+(.+?)\s+tu\s+(.+?)(?:\s|$)/i);
+  const fromToEn = normalized.match(/^from\s+(.+?)\s+to\s+(.+?)(?:\s|$)/i);
+  // "tôi muốn đi Huế đến Phong Nha" → "di hue den phong nha" after sanitize
+  const diDenChain = normalized.match(/^di\s+(.+?)\s+(?:den|toi)\s+(.+?)(?:\s|$)/i);
+
+  if (tuDen) {
+    tryAssignRoute(tuDen[1], tuDen[2]);
+  } else if (denTu) {
+    tryAssignRoute(denTu[2], denTu[1]);
+  } else if (fromToEn) {
+    tryAssignRoute(fromToEn[1], fromToEn[2]);
+  } else if (diDenChain) {
+    tryAssignRoute(diDenChain[1], diDenChain[2]);
+  } else if (looseRoute) {
+    tryAssignRoute(looseRoute[1], looseRoute[2]);
   }
 
   if (!params.from || !params.to) {
     const afterFrom = normalized.split(/\btu\b/)[1];
     const afterTo = normalized.split(/\b(?:den|toi|di)\b/)[1];
-    if (!params.from && afterFrom) params.from = findLocationInText(afterFrom, locations);
-    if (!params.to && afterTo) params.to = findLocationInText(afterTo, locations);
+    if (!params.from && afterFrom) {
+      const slug = findLocationInText(afterFrom, locations);
+      if (slug && isKnownLocationSlug(slug, locations)) params.from = slug;
+    }
+    if (!params.to && afterTo) {
+      const slug = findLocationInText(afterTo, locations);
+      if (slug && isKnownLocationSlug(slug, locations)) params.to = slug;
+    }
   }
+
+  // Geolocation order: "Huế đi Phong Nha" / STT mangled text — pick first & last known cities
+  if (!params.from || !params.to) {
+    const ordered = findOrderedLocationSlugs(normalized, locations);
+    if (ordered.length >= 2) {
+      if (!params.from) params.from = ordered[0];
+      if (!params.to) params.to = ordered[ordered.length - 1];
+    } else if (ordered.length === 1) {
+      const only = ordered[0];
+      const labels = buildLocationCandidates(locations)
+        .filter((c) => c.slug === only)
+        .map((c) => c.label)
+        .sort((a, b) => b.length - a.length);
+      const labelFor = labels[0] ?? "";
+      const pos = labelFor ? normalized.indexOf(labelFor) : -1;
+      const diMatch = normalized.match(/\b(?:di|den|toi)\s+/);
+      const diIdx = diMatch?.index ?? -1;
+      const tuMatch = normalized.match(/\btu\s+/);
+      const tuIdx = tuMatch?.index ?? -1;
+
+      if (!params.to && diIdx >= 0 && pos >= 0 && pos >= diIdx) {
+        params.to = only;
+      } else if (!params.from && tuIdx >= 0 && pos >= 0 && pos >= tuIdx + 3) {
+        params.from = only;
+      } else if (!params.to && !params.from) {
+        params.to = only;
+      }
+    }
+  }
+
+  // Drop bogus "from" that is not a real city (e.g. "vé", "vẻ đẹp" fragments)
+  if (params.from && !isKnownLocationSlug(params.from, locations)) delete params.from;
+  if (params.to && !isKnownLocationSlug(params.to, locations)) delete params.to;
 
   const departureDate = parseDateFromText(text);
   if (departureDate) params.departureDate = departureDate;
 
-  const passengerMatch = normalized.match(/\b(\d{1,2})\s*(?:nguoi|khach|hanh khach|ve)\b/);
+  // Do not use bare "ve" — STT often says "vé" / "vé đi" and it is not "số vé"
+  const passengerMatch = normalized.match(/\b(\d{1,2})\s*(?:nguoi|khach|hanh\s*khach)\b/);
   if (passengerMatch) params.passengers = passengerMatch[1];
 
-  const vehicle = vehicleKeywordMap.find((item) => item.keywords.some((keyword) => normalized.includes(normalizeText(keyword))));
+  const vehicle = vehicleKeywordMap.find((item) =>
+    item.keywords.some((keyword) => normalized.includes(normalizeText(keyword))),
+  );
   if (vehicle?.slug) params.vehicleType = vehicle.slug;
   if (vehicle?.smart) params.smart = vehicle.smart;
   if (vehicle?.intent) params.intent = vehicle.intent;
 
+  const routeComplete =
+    Boolean(params.from && params.to && params.from !== params.to);
+  if (!routeComplete) {
+    params.q = text.trim();
+  }
+
   return params;
+}
+
+/** Chọn bản ghi âm cho điểm số parse (đủ from+to > chỉ đến > rỗng). */
+function scoreParsedIntent(params: Record<string, string>, locations: HomeLocationOption[]) {
+  const fromOk = Boolean(params.from && isKnownLocationSlug(params.from, locations));
+  const toOk = Boolean(params.to && isKnownLocationSlug(params.to, locations));
+  if (fromOk && toOk && params.from !== params.to) return 100;
+  if (fromOk && toOk) return 45;
+  if (fromOk) return 38;
+  if (toOk) return 35;
+  if (params.departureDate) return 8;
+  if (params.passengers) return 4;
+  return 0;
+}
+
+function pickBestVoiceTranscript(alternatives: string[], locations: HomeLocationOption[]) {
+  const seen = new Set<string>();
+  const alts: string[] = [];
+  for (const raw of alternatives) {
+    const t = raw.trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    alts.push(t);
+  }
+  if (!alts.length) return "";
+  let best = alts[0];
+  let bestScore = scoreParsedIntent(parseNaturalSearch(best, locations), locations);
+  for (let i = 1; i < alts.length; i++) {
+    const s = scoreParsedIntent(parseNaturalSearch(alts[i], locations), locations);
+    if (s > bestScore) {
+      bestScore = s;
+      best = alts[i];
+    }
+  }
+  return best;
+}
+
+/**
+ * Mic/STT thường chỉ còn tên đến — nếu trong gợi ý phổ biến chỉ có một cặp với đúng `to`, gợi ý `from`.
+ */
+function supplementFromPopularRoute(
+  params: Record<string, string>,
+  popularSearches: Array<{ label: string; href: string }>,
+  locations: HomeLocationOption[],
+) {
+  const hasFrom = params.from && isKnownLocationSlug(params.from, locations);
+  const hasTo = params.to && isKnownLocationSlug(params.to, locations);
+  if (hasFrom || !hasTo || !params.to) {
+    return params;
+  }
+
+  const candidates: string[] = [];
+  for (const row of popularSearches) {
+    try {
+      const url = row.href.includes("://")
+        ? new URL(row.href)
+        : new URL(row.href, "https://vnbus.local");
+      const toSlug = url.searchParams.get("to");
+      const fromSlug = url.searchParams.get("from");
+      if (toSlug === params.to && fromSlug && isKnownLocationSlug(fromSlug, locations)) {
+        candidates.push(fromSlug);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  const unique = [...new Set(candidates)];
+  if (unique.length !== 1) {
+    return params;
+  }
+
+  const next: Record<string, string> = { ...params, from: unique[0] };
+  if (next.from && next.to && next.from !== next.to) {
+    delete next.q;
+  }
+  return next;
 }
 
 function locationName(slug: string | undefined, locations: HomeLocationOption[]) {
@@ -319,7 +589,10 @@ export function HeroTravelConsole({
   );
   const parsedParams = useMemo(() => {
     const text = naturalQuery.trim();
-    if (text) return parseNaturalSearch(text, locations);
+    if (text) {
+      const parsed = parseNaturalSearch(text, locations);
+      return supplementFromPopularRoute(parsed, popularSearches, locations);
+    }
     return {
       from: resolveLocationSlug(from, locations),
       to: resolveLocationSlug(to, locations),
@@ -327,7 +600,7 @@ export function HeroTravelConsole({
       passengers,
       vehicleType,
     };
-  }, [departureDate, from, locations, naturalQuery, passengers, to, vehicleType]);
+  }, [departureDate, from, locations, naturalQuery, passengers, popularSearches, to, vehicleType]);
 
   const summaryChips = useMemo<SummaryChip[]>(() => {
     const chips: SummaryChip[] = [];
@@ -381,16 +654,38 @@ export function HeroTravelConsole({
       return;
     }
 
-    setVoiceMessage(copy.listening);
+    setVoiceMessage(`${copy.listening} ${copy.voiceTip}`);
     const recognition = new SpeechRecognition();
-    recognition.lang = "vi-VN";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    const speechLang: Record<Locale, string> = {
+      vi: "vi-VN",
+      en: "en-US",
+      ko: "ko-KR",
+      ja: "ja-JP",
+    };
+    recognition.lang = speechLang[locale] ?? "vi-VN";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 10;
     recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
+      const alternatives: string[] = [];
+      for (let resultIndex = 0; resultIndex < event.results.length; resultIndex++) {
+        const chunk = event.results[resultIndex] as SpeechRecognitionChunk | undefined;
+        const n = chunk && typeof chunk.length === "number" ? chunk.length : 1;
+        for (let i = 0; i < n; i++) {
+          const t = chunk?.[i]?.transcript?.trim();
+          if (t) alternatives.push(t);
+        }
+      }
+      const transcript =
+        alternatives.length > 1
+          ? pickBestVoiceTranscript(alternatives, locations)
+          : (alternatives[0] ?? "");
       setNaturalQuery(transcript);
       setVoiceMessage(copy.voiceDone);
       inputRef.current?.focus();
+    };
+    recognition.onend = () => {
+      setVoiceMessage((current) => current === `${copy.listening} ${copy.voiceTip}` ? copy.voiceError : current);
     };
     recognition.onerror = () => setVoiceMessage(copy.voiceError);
     recognition.start();
@@ -493,6 +788,7 @@ export function HeroTravelConsole({
               </button>
             </div>
             {voiceMessage ? <p className="mt-2 text-xs font-semibold text-[#64748B]">{voiceMessage}</p> : null}
+            <p className="mt-2 text-[11px] leading-4 text-[#94A3B8]">{copy.voiceTip}</p>
           </div>
 
           <div className="mt-4 rounded-2xl bg-blue-50/70 p-4">

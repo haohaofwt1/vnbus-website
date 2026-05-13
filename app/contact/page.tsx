@@ -14,10 +14,11 @@ export const metadata: Metadata = buildMetadata({
 export default async function ContactPage({
   searchParams,
 }: {
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; type?: string }>;
 }) {
   const search = await searchParams;
   const locale = resolveLocale(search.lang);
+  const isOperatorInquiry = search.type === "operator";
   const copy = {
     en: {
       eyebrow: "Contact",
@@ -100,20 +101,55 @@ export default async function ContactPage({
       searchRoutes: "路線を検索",
     },
   }[locale];
+  const operatorCopy = {
+    en: {
+      title: "Partner with VNBus and sell your routes online",
+      description:
+        "Send your operator information. VNBus will review your fleet, routes, vehicle types, contacts and payout setup before creating access to the operator workspace.",
+      placeholder: "Tell us your operator name, routes, vehicle types, daily departures, contact person and preferred payout method.",
+      submit: "Send operator request",
+    },
+    vi: {
+      title: "Đăng ký nhà xe bán vé trên VNBus",
+      description:
+        "Gửi thông tin nhà xe của bạn. VNBus sẽ duyệt hồ sơ, tuyến khai thác, loại xe, thông tin liên hệ và cấu hình thanh toán trước khi cấp quyền vào workspace nhà xe.",
+      placeholder: "Cho biết tên nhà xe, tuyến đang chạy, loại xe, số chuyến mỗi ngày, người phụ trách và phương thức nhận thanh toán.",
+      submit: "Gửi yêu cầu đăng ký",
+    },
+    ko: {
+      title: "VNBus와 제휴하여 노선을 온라인 판매하세요",
+      description:
+        "운행사 정보를 보내주세요. VNBus가 차량, 노선, 차량 유형, 연락처, 정산 설정을 검토한 뒤 운영사 워크스페이스 접근 권한을 제공합니다.",
+      placeholder: "운행사명, 노선, 차량 유형, 일 운행 횟수, 담당자, 정산 방식을 입력해 주세요.",
+      submit: "운영사 요청 보내기",
+    },
+    ja: {
+      title: "VNBusで路線をオンライン販売する",
+      description:
+        "運行会社情報を送信してください。VNBusが車両、路線、車両タイプ、連絡先、支払い設定を確認後、運行会社ワークスペースの権限を発行します。",
+      placeholder: "運行会社名、路線、車両タイプ、1日の便数、担当者、支払い方法を入力してください。",
+      submit: "運行会社申請を送信",
+    },
+  }[locale];
+  const pageTitle = isOperatorInquiry ? operatorCopy.title : copy.title;
+  const pageDescription = isOperatorInquiry ? operatorCopy.description : copy.description;
+  const notesPlaceholder = isOperatorInquiry ? operatorCopy.placeholder : copy.placeholder;
+  const submitLabel = isOperatorInquiry ? operatorCopy.submit : copy.submit;
   return (
     <section className="section-space">
       <div className="container-shell grid gap-8 xl:grid-cols-[1fr_0.9fr]">
         <div className="card-surface p-8 sm:p-10">
           <p className="eyebrow">{copy.eyebrow}</p>
           <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
-            {copy.title}
+            {pageTitle}
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-muted">
-            {copy.description}
+            {pageDescription}
           </p>
 
           <form action={submitContactInquiry} className="mt-8 grid gap-4 md:grid-cols-2">
             <input type="hidden" name="lang" value={locale} />
+            <input type="hidden" name="inquiryType" value={isOperatorInquiry ? "operator" : "general"} />
             <label className="space-y-2 text-sm font-medium text-slate-700">
               <span>{copy.fullName}</span>
               <input
@@ -152,7 +188,7 @@ export default async function ContactPage({
                 name="notes"
                 rows={7}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-                placeholder={copy.placeholder}
+                placeholder={notesPlaceholder}
                 required
               />
             </label>
@@ -161,7 +197,7 @@ export default async function ContactPage({
                 type="submit"
                 className="inline-flex rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
-                {copy.submit}
+                {submitLabel}
               </button>
             </div>
           </form>

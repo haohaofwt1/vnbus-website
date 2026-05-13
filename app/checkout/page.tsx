@@ -3,6 +3,8 @@ import Link from "next/link";
 import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { prisma } from "@/lib/prisma";
 import { validatePromotion } from "@/lib/promotions";
+import { resolveLocale, withLang } from "@/lib/i18n";
+import { getCheckoutUnavailableCopy } from "@/lib/public-locale-copy";
 import { buildMetadata } from "@/lib/seo";
 import { getPaymentSettings } from "@/lib/site-settings";
 
@@ -27,6 +29,8 @@ export default async function CheckoutPage({
   }>;
 }) {
   const params = await searchParams;
+  const locale = resolveLocale(params.lang);
+  const unavailable = getCheckoutUnavailableCopy(locale);
   const [trip, paymentSettings] = await Promise.all([
     params.tripId
       ? prisma.trip.findUnique({
@@ -46,18 +50,18 @@ export default async function CheckoutPage({
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-10">
         <div className="mx-auto max-w-xl rounded-[1.5rem] bg-white p-8 text-center shadow-soft">
-          <p className="eyebrow">Checkout unavailable</p>
+          <p className="eyebrow">{unavailable.eyebrow}</p>
           <h1 className="mt-4 text-3xl font-bold text-ink">
-            This trip cannot be booked right now
+            {unavailable.title}
           </h1>
           <p className="mt-4 text-sm leading-7 text-muted">
-            The seat may be unavailable, sold out, or the payment session has expired.
+            {unavailable.body}
           </p>
           <Link
-            href="/search"
+            href={withLang("/search", locale)}
             className="mt-6 inline-flex rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white"
           >
-            Search trips
+            {unavailable.cta}
           </Link>
         </div>
       </main>
@@ -85,6 +89,7 @@ export default async function CheckoutPage({
 
   return (
     <CheckoutFlow
+      locale={locale}
       trip={{
         id: trip.id,
         departureTime: trip.departureTime.toISOString(),
@@ -110,7 +115,7 @@ export default async function CheckoutPage({
         departureDate: params.departureDate,
         returnDate: params.returnDate,
         passengers: passengerCount,
-        lang: params.lang || "en",
+        lang: locale,
         promoCode: params.promoCode,
       }}
       initialPromotion={initialPromotion}

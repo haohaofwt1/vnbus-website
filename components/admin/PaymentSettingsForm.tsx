@@ -152,10 +152,10 @@ export function PaymentSettingsForm({ settings, status }: PaymentSettingsFormPro
               ready={bankReady}
             >
               <PlainField label="Bank name" name="bankName" defaultValue={settings.bankTransfer.bankName} placeholder="Vietcombank" />
-              <PlainField label="Bank code" name="bankCode" defaultValue={settings.bankTransfer.bankCode} placeholder="VCB" />
+              <PlainField label="Bank code / VietQR BIN" name="bankCode" defaultValue={settings.bankTransfer.bankCode} placeholder="VCB or 970436" />
               <PlainField label="Account holder" name="accountName" defaultValue={settings.bankTransfer.accountName} placeholder="VNBus Company" />
               <PlainField label="Account number" name="accountNumber" defaultValue={settings.bankTransfer.accountNumber} placeholder="0123456789" />
-              <PlainField label="QR image URL" name="qrImageUrl" defaultValue={settings.bankTransfer.qrImageUrl} placeholder="https://.../qr.png" />
+              <PlainField label="Fallback QR image URL" name="qrImageUrl" defaultValue={settings.bankTransfer.qrImageUrl} placeholder="Only used if dynamic VietQR cannot be generated" />
               <PlainField label="Transfer prefix" name="transferPrefix" defaultValue={settings.bankTransfer.transferPrefix} placeholder="VNBUS" />
               <label className="space-y-2 text-sm font-semibold text-slate-700 lg:col-span-2">
                 <span>Instructions</span>

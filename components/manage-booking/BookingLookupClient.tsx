@@ -17,6 +17,9 @@ import {
   TicketCheck,
   Users,
 } from "lucide-react";
+import type { Locale } from "@/lib/i18n";
+import { getRouteLabel } from "@/lib/i18n";
+import { getBookingLookupUiCopy, getBookingStatusCopy } from "@/lib/public-locale-copy";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 
 type Payment = {
@@ -57,59 +60,12 @@ type LookupBooking = {
 
 type LookupResponse = { booking?: LookupBooking; error?: string };
 
-const statusStyles: Record<string, { label: string; className: string; helper: string }> = {
-  NEW: {
-    label: "Request received",
-    className: "bg-blue-50 text-blue-700 ring-blue-100",
-    helper: "VNBus support will review your request and contact you.",
-  },
-  CONTACTED: {
-    label: "Support contacted",
-    className: "bg-blue-50 text-blue-700 ring-blue-100",
-    helper: "Our team has contacted you about this booking.",
-  },
-  PENDING_PAYMENT: {
-    label: "Pending payment",
-    className: "bg-amber-50 text-amber-700 ring-amber-100",
-    helper: "Complete payment to secure your seat.",
-  },
-  PAID: {
-    label: "Paid",
-    className: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-    helper: "Payment has been received. Your booking is being finalized.",
-  },
-  CONFIRMED: {
-    label: "Confirmed",
-    className: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-    helper: "Your seat is confirmed.",
-  },
-  FAILED: {
-    label: "Payment failed",
-    className: "bg-rose-50 text-rose-700 ring-rose-100",
-    helper: "Payment was not completed. You can retry or contact support.",
-  },
-  CANCELLED: {
-    label: "Cancelled",
-    className: "bg-slate-100 text-slate-700 ring-slate-200",
-    helper: "This booking was cancelled.",
-  },
-  REFUNDED: {
-    label: "Refunded",
-    className: "bg-slate-100 text-slate-700 ring-slate-200",
-    helper: "This booking has been refunded.",
-  },
-  COMPLETED: {
-    label: "Completed",
-    className: "bg-slate-100 text-slate-700 ring-slate-200",
-    helper: "This journey is complete.",
-  },
-};
-
 function cleanReference(value: string) {
   return value.trim().replace(/\s+/g, "");
 }
 
-export function BookingLookupClient() {
+export function BookingLookupClient({ locale }: { locale: Locale }) {
+  const copy = getBookingLookupUiCopy(locale);
   const [reference, setReference] = useState("");
   const [contact, setContact] = useState("");
   const [booking, setBooking] = useState<LookupBooking | null>(null);
@@ -118,12 +74,13 @@ export function BookingLookupClient() {
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState("");
 
-  const status = booking ? statusStyles[booking.status] ?? statusStyles.NEW : null;
+  const status = booking ? getBookingStatusCopy(locale, booking.status) : null;
   const canPay = booking?.status === "PENDING_PAYMENT" || booking?.status === "FAILED";
   const total = useMemo(() => {
-    if (!booking?.totalAmount || !booking.currency) return "Awaiting quote";
+    const c = getBookingLookupUiCopy(locale);
+    if (!booking?.totalAmount || !booking.currency) return c.totalAwaiting;
     return formatCurrency(booking.totalAmount, booking.currency);
-  }, [booking]);
+  }, [booking, locale]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,12 +98,12 @@ export function BookingLookupClient() {
       const data = (await response.json()) as LookupResponse;
 
       if (!response.ok || !data.booking) {
-        throw new Error(data.error || "We could not find this booking.");
+        throw new Error(data.error || copy.notFound);
       }
 
       setBooking(data.booking);
     } catch (lookupError) {
-      setError(lookupError instanceof Error ? lookupError.message : "We could not find this booking.");
+      setError(lookupError instanceof Error ? lookupError.message : copy.notFound);
     } finally {
       setIsLoading(false);
     }
@@ -168,17 +125,17 @@ export function BookingLookupClient() {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingRequestId: booking.id }),
+        body: JSON.stringify({ bookingRequestId: booking.id, lang: locale }),
       });
       const data = await response.json();
 
       if (!response.ok || !data.checkoutUrl) {
-        throw new Error(data.error || "Could not start payment.");
+        throw new Error(data.error || copy.paymentStartError);
       }
 
       window.location.href = data.checkoutUrl;
     } catch (paymentStartError) {
-      setPaymentError(paymentStartError instanceof Error ? paymentStartError.message : "Could not start payment.");
+      setPaymentError(paymentStartError instanceof Error ? paymentStartError.message : copy.paymentStartError);
     } finally {
       setPaymentLoading(null);
     }
@@ -191,47 +148,47 @@ export function BookingLookupClient() {
         <div className="container-shell relative grid items-center gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_460px] lg:py-14">
           <div className="max-w-3xl">
             <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-blue-100">
-              Manage my booking
+              {copy.heroEyebrow}
             </p>
             <h1 className="mt-6 max-w-4xl font-[family-name:var(--font-heading)] text-4xl font-black tracking-tight sm:text-5xl lg:text-[4.5rem] lg:leading-[0.98]">
-              Find your VNBus booking without an account.
+              {copy.heroTitle}
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-blue-100/90">
-              Check payment status, pickup details, ticket information and support options using your booking reference and contact detail.
+              {copy.heroBody}
             </p>
             <div className="mt-7 grid max-w-3xl gap-3 text-sm font-bold text-blue-50 sm:grid-cols-3">
-              <TrustChip icon={<ShieldCheck className="h-4 w-4" />} label="Secure lookup" />
-              <TrustChip icon={<TicketCheck className="h-4 w-4" />} label="No login required" />
-              <TrustChip icon={<Clock3 className="h-4 w-4" />} label="Live status" />
+              <TrustChip icon={<ShieldCheck className="h-4 w-4" />} label={copy.trust1} />
+              <TrustChip icon={<TicketCheck className="h-4 w-4" />} label={copy.trust2} />
+              <TrustChip icon={<Clock3 className="h-4 w-4" />} label={copy.trust3} />
             </div>
           </div>
 
           <form onSubmit={submit} className="self-start rounded-[2rem] border border-white/20 bg-white p-5 text-ink shadow-[0_24px_70px_rgba(3,12,32,0.34)] sm:p-7 lg:mt-1">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-brand-700">Booking lookup</p>
-                <h2 className="mt-2 text-2xl font-black text-ink">View your trip</h2>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-brand-700">{copy.formEyebrow}</p>
+                <h2 className="mt-2 text-2xl font-black text-ink">{copy.formTitle}</h2>
               </div>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-brand-700">Private</span>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-brand-700">{copy.formPrivate}</span>
             </div>
 
             <label className="mt-6 block text-sm font-black text-slate-700">
-              Booking reference
+              {copy.refLabel}
               <input
                 value={reference}
                 onChange={(event) => setReference(event.target.value)}
-                placeholder="VNBUS-ABC12345 or full booking ID"
+                placeholder={copy.refPlaceholder}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-base font-semibold outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
                 required
               />
             </label>
 
             <label className="mt-4 block text-sm font-black text-slate-700">
-              Email or phone number
+              {copy.contactLabel}
               <input
                 value={contact}
                 onChange={(event) => setContact(event.target.value)}
-                placeholder="Email or phone used for booking"
+                placeholder={copy.contactPlaceholder}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-base font-semibold outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
                 required
               />
@@ -250,10 +207,10 @@ export function BookingLookupClient() {
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-500 px-5 py-4 text-base font-black text-white shadow-[0_14px_30px_rgba(249,115,22,0.28)] transition hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Search className="h-5 w-5" />
-              {isLoading ? "Searching..." : "Search booking"}
+              {isLoading ? copy.searching : copy.search}
             </button>
             <p className="mt-4 text-center text-xs font-semibold leading-6 text-slate-500">
-              Your contact detail must match the booking before we show trip information.
+              {copy.formNote}
             </p>
           </form>
         </div>
@@ -267,7 +224,7 @@ export function BookingLookupClient() {
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-700">{booking.reference}</p>
                   <h2 className="mt-2 text-3xl font-black text-ink">
-                    {booking.fromCity} to {booking.toCity}
+                    {getRouteLabel(booking.fromCity, booking.toCity, locale)}
                   </h2>
                   <p className="mt-2 text-sm font-semibold text-slate-500">{status.helper}</p>
                 </div>
@@ -277,30 +234,36 @@ export function BookingLookupClient() {
               </div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <InfoCard icon={<CalendarDays />} label="Departure" value={formatDate(booking.departureDate)} />
-                <InfoCard icon={<Users />} label="Passengers" value={`${booking.passengerCount} passenger${booking.passengerCount > 1 ? "s" : ""}`} />
-                <InfoCard icon={<TicketCheck />} label="Vehicle" value={booking.vehicleType} />
-                <InfoCard icon={<ReceiptText />} label="Total" value={total} />
-                <InfoCard icon={<MapPin />} label="Pickup" value={booking.pickupPoint} />
-                <InfoCard icon={<MapPin />} label="Drop-off" value={booking.dropoffPoint} />
+                <InfoCard icon={<CalendarDays />} label={copy.departure} value={formatDate(booking.departureDate)} />
+                <InfoCard
+                  icon={<Users />}
+                  label={copy.passengers}
+                  value={`${booking.passengerCount} ${booking.passengerCount > 1 ? copy.passengerMany : copy.passengerOne}`}
+                />
+                <InfoCard icon={<TicketCheck />} label={copy.vehicle} value={booking.vehicleType} />
+                <InfoCard icon={<ReceiptText />} label={copy.total} value={total} />
+                <InfoCard icon={<MapPin />} label={copy.pickup} value={booking.pickupPoint} />
+                <InfoCard icon={<MapPin />} label={copy.dropoff} value={booking.dropoffPoint} />
               </div>
 
               <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-lg font-black text-ink">Payment timeline</h3>
+                <h3 className="text-lg font-black text-ink">{copy.paymentTimeline}</h3>
                 <div className="mt-4 space-y-3">
                   {booking.payments.length ? booking.payments.map((payment) => (
                     <div key={payment.id} className="flex flex-col gap-2 rounded-2xl bg-white px-4 py-3 text-sm ring-1 ring-slate-200 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-black text-ink">{payment.provider} · {payment.status}</p>
                         <p className="mt-1 text-slate-500">
-                          {payment.paidAt ? `Paid ${formatDateTime(payment.paidAt)}` : `Created ${formatDateTime(payment.createdAt)}`}
+                          {payment.paidAt
+                            ? `${copy.paidAt} ${formatDateTime(payment.paidAt)}`
+                            : `${copy.created} ${formatDateTime(payment.createdAt)}`}
                         </p>
                       </div>
                       <p className="font-black text-ink">{formatCurrency(payment.amount, payment.currency)}</p>
                     </div>
                   )) : (
                     <p className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-600 ring-1 ring-slate-200">
-                      No payment attempt has been recorded yet.
+                      {copy.noPaymentYet}
                     </p>
                   )}
                 </div>
@@ -308,32 +271,32 @@ export function BookingLookupClient() {
             </div>
 
             <aside className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-700">Next actions</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-700">{copy.nextActions}</p>
               <div className="mt-5 space-y-3">
                 {canPay ? (
                   <>
-                    <ActionButton onClick={() => startPayment("stripe")} loading={paymentLoading === "stripe"} icon={<CreditCard className="h-4 w-4" />} label="Pay by card" />
-                    <ActionButton onClick={() => startPayment("vnpay")} loading={paymentLoading === "vnpay"} icon={<CreditCard className="h-4 w-4" />} label="Pay with VNPay" secondary />
-                    <ActionButton onClick={() => startPayment("bank")} loading={paymentLoading === "bank"} icon={<ReceiptText className="h-4 w-4" />} label="Bank transfer QR" secondary />
+                    <ActionButton onClick={() => startPayment("stripe")} loading={paymentLoading === "stripe"} icon={<CreditCard className="h-4 w-4" />} label={copy.payCard} startingLabel={copy.starting} />
+                    <ActionButton onClick={() => startPayment("vnpay")} loading={paymentLoading === "vnpay"} icon={<CreditCard className="h-4 w-4" />} label={copy.payVnpay} secondary startingLabel={copy.starting} />
+                    <ActionButton onClick={() => startPayment("bank")} loading={paymentLoading === "bank"} icon={<ReceiptText className="h-4 w-4" />} label={copy.payBank} secondary startingLabel={copy.starting} />
                   </>
                 ) : null}
 
                 {booking.operator?.contactPhone ? (
                   <a href={`tel:${booking.operator.contactPhone}`} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100">
-                    <Phone className="h-4 w-4" /> Contact operator
+                    <Phone className="h-4 w-4" /> {copy.contactOperator}
                   </a>
                 ) : (
                   <a href="tel:0857050677" className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100">
-                    <Phone className="h-4 w-4" /> Contact VNBus
+                    <Phone className="h-4 w-4" /> {copy.contactVnbus}
                   </a>
                 )}
 
                 <a href={`mailto:${booking.customerEmail}?subject=VNBus receipt ${booking.id}`} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100">
-                  <Mail className="h-4 w-4" /> Email receipt
+                  <Mail className="h-4 w-4" /> {copy.emailReceipt}
                 </a>
 
                 <button type="button" onClick={() => window.print()} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100">
-                  <Download className="h-4 w-4" /> Download / print
+                  <Download className="h-4 w-4" /> {copy.print}
                 </button>
               </div>
 
@@ -344,8 +307,8 @@ export function BookingLookupClient() {
               ) : null}
 
               <div className="mt-6 rounded-2xl bg-white p-4 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">
-                <p className="font-black text-ink">Need help?</p>
-                <p className="mt-1">Call 0857.05.06.77 or 0905.615.715. Have your reference ready so support can find your booking faster.</p>
+                <p className="font-black text-ink">{copy.needHelp}</p>
+                <p className="mt-1">{copy.needHelpBody}</p>
               </div>
             </aside>
           </div>
@@ -386,12 +349,14 @@ function ActionButton({
   loading,
   onClick,
   secondary,
+  startingLabel,
 }: {
   icon: React.ReactNode;
   label: string;
   loading: boolean;
   onClick: () => void;
   secondary?: boolean;
+  startingLabel: string;
 }) {
   return (
     <button
@@ -404,7 +369,7 @@ function ActionButton({
       }
     >
       {icon}
-      {loading ? "Starting..." : label}
+      {loading ? startingLabel : label}
       {!loading ? <ArrowRight className="h-4 w-4" /> : null}
     </button>
   );

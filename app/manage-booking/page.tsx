@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BookingLookupClient } from "@/components/manage-booking/BookingLookupClient";
+import { resolveLocale } from "@/lib/i18n";
 import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,12 @@ export const metadata: Metadata = buildMetadata({
   path: "/manage-booking",
 });
 
-export default function ManageBookingPage() {
-  return <BookingLookupClient />;
+export default async function ManageBookingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const { lang } = await searchParams;
+  const locale = resolveLocale(lang);
+  return <BookingLookupClient locale={locale} />;
 }

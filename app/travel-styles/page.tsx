@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Clock3, Globe2, Luggage, Plane, Sparkles, Star, Users } from "lucide-react";
 import { resolveLocale, withLang } from "@/lib/i18n";
+import { getTravelStylesPageCopy } from "@/lib/public-locale-copy";
 import { buildMetadata } from "@/lib/seo";
 import { getHomepageSettings } from "@/lib/site-settings";
 
@@ -22,16 +23,17 @@ export default async function TravelStylesPage({
 }) {
   const { lang } = await searchParams;
   const locale = resolveLocale(lang);
+  const pageCopy = getTravelStylesPageCopy(locale);
   const homepage = await getHomepageSettings();
 
   return (
     <section className="section-space">
       <div className="container-shell space-y-8">
         <div>
-          <p className="eyebrow">Travel styles</p>
-          <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-black text-ink">Explore all travel styles</h1>
+          <p className="eyebrow">{pageCopy.eyebrow}</p>
+          <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-black text-ink">{pageCopy.title}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-            These cards are managed in Website settings and link into the smart search filters.
+            {pageCopy.body}
           </p>
         </div>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -44,7 +46,7 @@ export default async function TravelStylesPage({
                 <p className="mt-3 text-sm leading-7 text-muted">{card.body}</p>
                 <p className="mt-4 text-xs font-black uppercase text-orange-600">{card.vehicle}</p>
                 <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-brand-700">
-                  Search this style <ArrowRight className="h-4 w-4" />
+                  {pageCopy.cta} <ArrowRight className="h-4 w-4" />
                 </span>
               </Link>
             );

@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { resolveLocale, type Locale } from "@/lib/i18n";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { getPaymentSettings } from "@/lib/site-settings";
 
-const schema = z.object({ bookingRequestId: z.string().min(2) });
+const schema = z.object({
+  bookingRequestId: z.string().min(2),
+  lang: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
-  const { bookingRequestId } = schema.parse(await request.json());
+  const { bookingRequestId, lang } = schema.parse(await request.json());
+  const locale: Locale = resolveLocale(lang);
+  const langSuffix = locale === "vi" ? "" : `&lang=${locale}`;
   const paymentSettings = await getPaymentSettings();
 
   if (!paymentSettings.bankTransferEnabled) {
@@ -53,15 +59,25 @@ export async function POST(request: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  const payment = existing ?? await prisma.payment.create({
-    data: {
-      bookingRequestId: booking.id,
-      provider: "MANUAL",
-      amount: booking.totalAmount,
-      currency: booking.currency,
-      status: "PENDING",
-    },
-  });
+  const payment = existing
+    ? existing.amount !== booking.totalAmount || existing.currency !== booking.currency
+      ? await prisma.payment.update({
+          where: { id: existing.id },
+          data: {
+            amount: booking.totalAmount,
+            currency: booking.currency,
+          },
+        })
+      : existing
+    : await prisma.payment.create({
+        data: {
+          bookingRequestId: booking.id,
+          provider: "MANUAL",
+          amount: booking.totalAmount,
+          currency: booking.currency,
+          status: "PENDING",
+        },
+      });
 
   await prisma.leadActivity.create({
     data: {
@@ -73,6 +89,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     paymentId: payment.id,
-    checkoutUrl: `/payment/bank-transfer?booking=${booking.id}&payment=${payment.id}`,
+    checkoutUrl: `/payment/bank-transfer?booking=${booking.id}&payment=${payment.id}${langSuffix}`,
   });
 }

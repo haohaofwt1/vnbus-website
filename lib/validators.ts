@@ -55,6 +55,7 @@ export const bookingRequestSchema = z.object({
 
 export const contactInquirySchema = z.object({
   lang: optionalString,
+  inquiryType: optionalString,
   customerName: z.string().trim().min(2),
   customerEmail: z.email(),
   customerPhone: z.string().trim().min(6),

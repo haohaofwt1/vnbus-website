@@ -63,18 +63,18 @@ export async function submitContactInquiry(formData: FormData) {
 
   const booking = await prisma.bookingRequest.create({
     data: {
-      fromCity: "General Inquiry",
-      toCity: "General Inquiry",
+      fromCity: parsed.inquiryType === "operator" ? "Operator Partnership" : "General Inquiry",
+      toCity: parsed.inquiryType === "operator" ? "Operator Partnership" : "General Inquiry",
       departureDate: new Date(),
       passengerCount: 1,
-      vehicleType: "General Inquiry",
+      vehicleType: parsed.inquiryType === "operator" ? "Operator registration" : "General Inquiry",
       customerName: parsed.customerName,
       customerEmail: parsed.customerEmail,
       customerPhone: parsed.customerPhone,
       whatsapp: parsed.whatsapp,
       notes: parsed.notes,
       status: "NEW",
-      source: "contact",
+      source: parsed.inquiryType === "operator" ? "operator_contact" : "contact",
     },
   });
 
@@ -82,7 +82,10 @@ export async function submitContactInquiry(formData: FormData) {
     data: {
       bookingRequestId: booking.id,
       type: "NOTE",
-      note: "Contact inquiry submitted from the public contact form.",
+      note:
+        parsed.inquiryType === "operator"
+          ? "Operator partnership inquiry submitted from the public header CTA."
+          : "Contact inquiry submitted from the public contact form.",
     },
   });
 

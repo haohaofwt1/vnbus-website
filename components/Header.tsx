@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { BusFront, Globe2, Headphones, Menu, Ticket, X } from "lucide-react";
+import { BusFront, Globe2, Handshake, Headphones, Menu, Ticket, X } from "lucide-react";
 import {
   resolveLocale,
   supportedLocales,
@@ -23,33 +23,33 @@ const publicLocaleLabels = {
 const headerCopy = {
   vi: {
     tagline: "Đặt vé xe dễ dàng",
-    nav: [["Tuyến xe", "/routes"], ["Nhà xe", "/operators"], ["Loại xe", "/vehicles"], ["Ưu đãi", "/offers"], ["Cẩm nang", "/blog"], ["Hỗ trợ", "/faq"]],
     support: "Hỗ trợ 24/7",
+    operatorRegister: "Đăng ký nhà xe",
     myTickets: "Vé của tôi",
     login: "Đăng nhập",
   },
   en: {
     tagline: "Easy bus booking",
-    nav: [["Routes", "/routes"], ["Operators", "/operators"], ["Vehicles", "/vehicles"], ["Deals", "/offers"], ["Guide", "/blog"], ["Support", "/faq"]],
     support: "24/7 support",
+    operatorRegister: "List your buses",
     myTickets: "My tickets",
     login: "Log in",
   },
   ko: {
     tagline: "Easy bus booking",
-    nav: [["Routes", "/routes"], ["Operators", "/operators"], ["Vehicles", "/vehicles"], ["Deals", "/offers"], ["Guide", "/blog"], ["Support", "/faq"]],
     support: "24/7 support",
+    operatorRegister: "List your buses",
     myTickets: "My tickets",
     login: "Log in",
   },
   ja: {
     tagline: "Easy bus booking",
-    nav: [["Routes", "/routes"], ["Operators", "/operators"], ["Vehicles", "/vehicles"], ["Deals", "/offers"], ["Guide", "/blog"], ["Support", "/faq"]],
     support: "24/7 support",
+    operatorRegister: "List your buses",
     myTickets: "My tickets",
     login: "Log in",
   },
-} satisfies Record<Locale, { tagline: string; nav: readonly (readonly [string, string])[]; support: string; myTickets: string; login: string }>;
+} satisfies Record<Locale, { tagline: string; support: string; operatorRegister: string; myTickets: string; login: string }>;
 
 export function Header({ branding }: { branding?: BrandingSettings | null }) {
   const pathname = usePathname();
@@ -64,7 +64,6 @@ export function Header({ branding }: { branding?: BrandingSettings | null }) {
   const locale = resolveLocale(searchParams.get("lang"));
   const siteName = branding?.siteName || "VNBus";
   const copy = headerCopy[locale];
-  const navItems = copy.nav;
 
   const buildLocaleSwitchHref = (nextLocale: Locale) => {
     const params = new URLSearchParams(searchString);
@@ -100,18 +99,18 @@ export function Header({ branding }: { branding?: BrandingSettings | null }) {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
-          {navItems.map(([label, href]) => (
-            <Link key={label} href={withLang(href, locale)} className="text-sm font-black text-[#071A33] transition hover:text-[#2563EB]">
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center justify-end gap-2">
           <Link href="tel:0857050677" className="hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-black text-[#071A33] transition hover:bg-slate-100 xl:inline-flex">
             <Headphones className="h-4 w-4 text-[#2563EB]" />
             {copy.support}
+          </Link>
+
+          <Link
+            href={withLang("/contact?type=operator", locale)}
+            className="hidden items-center gap-2 rounded-xl border border-orange-100 bg-orange-50 px-4 py-2.5 text-sm font-black text-[#C2410C] transition hover:border-orange-200 hover:bg-orange-100 lg:inline-flex"
+          >
+            <Handshake className="h-4 w-4" />
+            {copy.operatorRegister}
           </Link>
 
           <div className="hidden items-center gap-1 rounded-xl px-2 py-2 text-sm font-black text-[#071A33] md:flex">
@@ -157,13 +156,17 @@ export function Header({ branding }: { branding?: BrandingSettings | null }) {
       {open ? (
         <div className="border-t border-[#E5EAF2] bg-white lg:hidden">
           <div className="container-shell grid gap-2 py-4">
-            {navItems.map(([label, href]) => (
-              <Link key={label} href={withLang(href, locale)} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-black text-[#071A33] hover:bg-blue-50">
-                {label}
-              </Link>
-            ))}
+            <Link href="tel:0857050677" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-black text-[#071A33] hover:bg-blue-50">
+              {copy.support}
+            </Link>
+            <Link href={withLang("/contact?type=operator", locale)} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-black text-[#C2410C] hover:bg-orange-50">
+              {copy.operatorRegister}
+            </Link>
             <Link href={withLang("/manage-booking", locale)} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-black text-[#071A33] hover:bg-blue-50">
               {copy.myTickets}
+            </Link>
+            <Link href={withLang("/admin/login", locale)} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-black text-[#071A33] hover:bg-blue-50">
+              {copy.login}
             </Link>
           </div>
         </div>

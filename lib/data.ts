@@ -22,6 +22,8 @@ const publicTripStatuses = [TripStatus.ACTIVE, TripStatus.SOLD_OUT];
 export type SearchFilters = {
   lang?: string;
   smart?: string;
+  intent?: string;
+  q?: string;
   from?: string;
   to?: string;
   departureDate?: string;
@@ -448,6 +450,10 @@ export async function searchTrips(filters: SearchFilters) {
   const rating = Number(filters.rating || 0);
   const maxPrice = Number(filters.maxPrice || 0);
   const passengerCount = Math.max(1, Math.round(Number(filters.passengers || 1)) || 1);
+  const onlyInternational =
+    filters.smart === "border" ||
+    filters.intent === "international" ||
+    filters.intent === "border";
 
   const operatorFilter: Prisma.OperatorWhereInput = {};
 
@@ -467,6 +473,11 @@ export async function searchTrips(filters: SearchFilters) {
         },
         route: {
           status: EntityStatus.ACTIVE,
+          ...(onlyInternational
+            ? {
+                isInternational: true,
+              }
+            : {}),
           ...(filters.from
             ? {
                 fromCity: {

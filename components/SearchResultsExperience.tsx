@@ -105,6 +105,7 @@ function buildHrefWithoutValue(
   Object.entries(filters ?? {}).forEach(([key, rawValue]) => {
     if (!rawValue) return;
     if (key === omit && omitValue === undefined) return;
+    if ((omit === "smart" || omit === "intent") && (key === "smart" || key === "intent")) return;
     if (Array.isArray(rawValue)) {
       rawValue.forEach((item) => {
         if (key === omit && item === omitValue) return;
@@ -139,6 +140,9 @@ function activeFilterChips(
   toArray(filters?.pickup).forEach((value) => chips.push({ label: value, key: "pickup", value }));
   toArray(filters?.dropoff).forEach((value) => chips.push({ label: value, key: "dropoff", value }));
   toArray(filters?.amenities).forEach((value) => chips.push({ label: value, key: "amenities", value }));
+  if (filters?.smart === "border" || filters?.intent === "international") {
+    chips.push({ label: locale === "vi" ? "Tuyến quốc tế" : "International routes", key: "smart" });
+  }
   if (filters?.maxPrice) chips.push({ label: `${locale === "vi" ? "Tối đa" : "Max"} ${filters.maxPrice}`, key: "maxPrice" });
   if (filters?.rating) chips.push({ label: `${filters.rating}+ sao`, key: "rating" });
   return chips;

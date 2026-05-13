@@ -1,6 +1,7 @@
 import { EntityStatus, PromotionStatus, TripStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pickBestPromotionForTrip } from "@/lib/promotions";
+import { getHomepageSettings } from "@/lib/site-settings";
 
 export type HomeLocationOption = {
   id: string;
@@ -163,6 +164,36 @@ const vehicleOptionsFallback: HomeVehicleOption[] = [
   { id: "limousine", name: "Limousine", slug: "limousine" },
   { id: "ghe-ngoi", name: "Ghế ngồi", slug: "ghe-ngoi" },
 ];
+
+function intentIdFromAdmin(id: string) {
+  return id === "border" || id === "international" ? "international" : id;
+}
+
+function toneFromAdminColor(color: string): HomeIntent["tone"] {
+  const normalized = color.toLowerCase();
+  if (normalized.includes("green") || normalized.includes("emerald")) return "emerald";
+  if (normalized.includes("purple") || normalized.includes("violet")) return "violet";
+  if (normalized.includes("yellow") || normalized.includes("amber")) return "amber";
+  if (normalized.includes("rose") || normalized.includes("pink") || normalized.includes("red")) return "rose";
+  if (normalized.includes("orange")) return "orange";
+  return "blue";
+}
+
+function normalizeIntentHref(id: string, href: string) {
+  const fallbackHref = id === "international" ? "/search?intent=international&smart=border" : "/search";
+
+  try {
+    const url = new URL(href || fallbackHref, "https://vnbus.local");
+    if (id === "international") {
+      url.searchParams.set("intent", "international");
+      if (!url.searchParams.get("smart")) url.searchParams.set("smart", "border");
+    }
+    const query = url.searchParams.toString();
+    return query ? `${url.pathname}?${query}` : url.pathname;
+  } catch {
+    return fallbackHref;
+  }
+}
 
 export const featuredTripsFallback: HomeTripDeal[] = [
   {
@@ -375,7 +406,7 @@ export async function getFutureHomeData(): Promise<FutureHomeData> {
   const fallbackUsage: string[] = [];
 
   const now = new Date();
-  const [cities, vehicleTypes, trips, promotions, operators] = await Promise.all([
+  const [cities, vehicleTypes, trips, promotions, operators, homepageSettings] = await Promise.all([
     prisma.city
       .findMany({
         orderBy: { name: "asc" },
@@ -428,6 +459,7 @@ export async function getFutureHomeData(): Promise<FutureHomeData> {
         take: 6,
       })
       .catch(() => []),
+    getHomepageSettings().catch(() => null),
   ]);
 
   const locations = cities.map((city) => ({ id: city.id, name: city.name, slug: city.slug }));
@@ -504,6 +536,20 @@ export async function getFutureHomeData(): Promise<FutureHomeData> {
   }));
   if (!vehicles.length) fallbackUsage.push("vehicles");
 
+  const adminIntents = (homepageSettings?.smartSuggestions ?? [])
+    .filter((item) => item.enabled && item.showOnHomepage)
+    .sort((left, right) => left.displayOrder - right.displayOrder)
+    .map((item) => {
+      const id = intentIdFromAdmin(item.id);
+      return {
+        id,
+        title: item.title,
+        description: item.description,
+        href: normalizeIntentHref(id, item.href),
+        tone: toneFromAdminColor(item.color),
+      };
+    });
+
   const operatorItems = operators.slice(0, 4).map((operator) => {
     const routes = operator.trips
       .map((trip) => `${trip.route.fromCity.name} - ${trip.route.toCity.name}`)
@@ -530,7 +576,7 @@ export async function getFutureHomeData(): Promise<FutureHomeData> {
   return {
     locations: locations.length ? locations : locationFallback,
     vehicleOptions: vehicleOptions.length ? vehicleOptions : vehicleOptionsFallback,
-    intents: intentsFallback,
+    intents: adminIntents.length ? adminIntents : intentsFallback,
     featuredTrips: featuredTripItems,
     vehicles: vehicles.length ? vehicles : vehicleTypesFallback,
     operators: operatorItems.length ? operatorItems : operatorsFallback,
