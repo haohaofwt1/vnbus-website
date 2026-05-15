@@ -8,8 +8,12 @@ import { createAuditLog, getRequiredId, parseFormData, requireAdminUser } from "
 
 export async function createVehicleTypeAction(formData: FormData) {
   const session = await requireAdminUser();
-  const parsed = adminVehicleTypeSchema.parse(parseFormData(formData));
-  const vehicleType = await prisma.vehicleType.create({ data: parsed });
+  const parsed = adminVehicleTypeSchema.safeParse(parseFormData(formData));
+  if (!parsed.success) {
+    redirect("/admin/vehicles/new?error=invalid");
+  }
+
+  const vehicleType = await prisma.vehicleType.create({ data: parsed.data });
 
   await createAuditLog({
     userId: session.id,
@@ -29,11 +33,14 @@ export async function createVehicleTypeAction(formData: FormData) {
 export async function updateVehicleTypeAction(formData: FormData) {
   const session = await requireAdminUser();
   const id = getRequiredId(formData);
-  const parsed = adminVehicleTypeSchema.parse(parseFormData(formData));
+  const parsed = adminVehicleTypeSchema.safeParse(parseFormData(formData));
+  if (!parsed.success) {
+    redirect(`/admin/vehicles/${id}/edit?error=invalid`);
+  }
 
   await prisma.vehicleType.update({
     where: { id },
-    data: parsed,
+    data: parsed.data,
   });
 
   await createAuditLog({
@@ -41,7 +48,7 @@ export async function updateVehicleTypeAction(formData: FormData) {
     entityType: "VehicleType",
     entityId: id,
     action: "UPDATE",
-    metadata: { slug: parsed.slug },
+    metadata: { slug: parsed.data.slug },
   });
 
   revalidatePath("/");

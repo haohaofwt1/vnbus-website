@@ -1,60 +1,99 @@
+import Link from "next/link";
+import { ArrowRight, Banknote, CarFront, FileText, Home, Languages, PanelBottom, PanelTop } from "lucide-react";
+import { adminCopy } from "@/components/admin/admin-copy";
 import { ActionMessage } from "@/components/admin/ActionMessage";
-import { AdminMetricCard, AdminModuleHeader } from "@/components/admin/AdminModuleChrome";
-import { BrandingSettingsForm } from "@/components/admin/BrandingSettingsForm";
-import { FooterSettingsForm } from "@/components/admin/FooterSettingsForm";
-import { HomepageSettingsForm } from "@/components/admin/HomepageSettingsForm";
-import { SearchUiLabelsForm } from "@/components/admin/SearchUiLabelsForm";
-import { VehiclePageSettingsForm } from "@/components/admin/VehiclePageSettingsForm";
-import { getBrandingSettings, getFooterSettings, getHomepageSettings, getSearchUiLabels, getVehiclePageSettings } from "@/lib/site-settings";
+import { AdminModuleHeader } from "@/components/admin/AdminModuleChrome";
+import { SettingsSubnav } from "@/components/admin/SettingsSubnav";
+import { resolveLocale, withLang } from "@/lib/i18n";
 
 export default async function AdminContentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ brandingSaved?: string; labelsSaved?: string; homepageSaved?: string; footerSaved?: string; vehiclePageSaved?: string; error?: string }>;
+  searchParams: Promise<{ error?: string; lang?: string }>;
 }) {
   const params = await searchParams;
-  const [branding, labels, homepage, footer, vehiclePage] = await Promise.all([
-    getBrandingSettings(),
-    getSearchUiLabels(),
-    getHomepageSettings(),
-    getFooterSettings(),
-    getVehiclePageSettings(),
-  ]);
+  const locale = params.lang ? resolveLocale(params.lang) : "en";
+  const t = adminCopy[locale]?.texts ?? adminCopy.en.texts;
+
+  const settingsCards = [
+    {
+      href: "/admin/content/header",
+      title: t["Header"] || "Header",
+      body: t["Header description"] || "Logo, site name and multilingual public header tagline.",
+      icon: PanelTop,
+    },
+    {
+      href: "/admin/content/homepage",
+      title: t["Homepage content"] || "Homepage content",
+      body: t["Homepage description"] || "Hero, search suggestions, need cards and homepage blocks.",
+      icon: Home,
+    },
+    {
+      href: "/admin/content/vehicle-page",
+      title: t["Vehicle page"] || "Vehicle page",
+      body: t["Vehicle page description"] || "Banner image and public vehicle page asset settings.",
+      icon: CarFront,
+    },
+    {
+      href: "/admin/content/payments",
+      title: t["Payments"] || "Payments",
+      body: t["Payment description"] || "Payment providers, bank QR, VNPay, Stripe and checkout availability.",
+      icon: Banknote,
+    },
+    {
+      href: "/admin/content/policy",
+      title: t["Policy"] || "Policy",
+      body: t["Policy description"] || "Public policy pages for booking, cancellation, payment and support.",
+      icon: FileText,
+    },
+    {
+      href: "/admin/content/footer",
+      title: t["Footer"] || "Footer",
+      body: t["Footer description"] || "Footer description, contact phones, social links and groups.",
+      icon: PanelBottom,
+    },
+    {
+      href: "/admin/content/search-labels",
+      title: t["Search labels"] || "Search labels",
+      body: t["Search labels description"] || "Multilingual labels for search, filters, trip cards and badges.",
+      icon: Languages,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <AdminModuleHeader
-        eyebrow="Settings"
-        title="Website settings"
-        description="Control public branding, search labels, language-facing copy and reusable assets from one operations settings module."
-        secondaryAction={{ href: "/", label: "View website" }}
+        eyebrow={adminCopy[locale]?.modules?.content || adminCopy.en.modules.content}
+        title={t["Website settings"] || "Website settings"}
+        description={t["Settings description"] || "Settings have been split into subpages for easier management, avoiding a very long screen."}
+        secondaryAction={{ href: "/", label: t["View website"] || "View website" }}
       />
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <AdminMetricCard label="Brand" value={branding.siteName || "VNBus"} helper="Public header identity" />
-        <AdminMetricCard label="Logo" value={branding.logoUrl ? "Configured" : "Default"} helper="Brand asset status" />
-        <AdminMetricCard label="Search labels" value="Editable" helper="Public search UI copy" />
+      <SettingsSubnav />
+
+      {params.error === "migrate-site-settings" ? <ActionMessage type="error" message={t["Database missing content table"] || "Database is missing the new Website Content table. Please run the migration and try saving again."} /> : null}
+
+      <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        {settingsCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={withLang(item.href, locale)}
+              className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
+                <Icon className="h-5 w-5" />
+              </span>
+              <h2 className="mt-5 text-xl font-black text-ink">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">{item.body}</p>
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-black text-brand-700">
+                {t["Open settings"] || "Open settings"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          );
+        })}
       </section>
-
-      {params.brandingSaved ? <ActionMessage type="success" message="Branding settings updated." /> : null}
-      {params.labelsSaved ? <ActionMessage type="success" message="Search UI labels updated." /> : null}
-      {params.homepageSaved ? <ActionMessage type="success" message="Homepage content updated." /> : null}
-      {params.footerSaved ? <ActionMessage type="success" message="Footer content updated." /> : null}
-      {params.vehiclePageSaved ? <ActionMessage type="success" message="Vehicle page settings updated." /> : null}
-      {params.error === "migrate-site-settings" ? <ActionMessage type="error" message="Database chưa có bảng Website Content mới. Hãy chạy `npx prisma migrate dev` và `npx prisma db seed`, rồi thử lưu lại." /> : null}
-      {params.error === "branding-save-failed" ? <ActionMessage type="error" message="Không thể lưu branding lúc này. Kiểm tra lại database rồi thử lại." /> : null}
-      {params.error === "labels-save-failed" ? <ActionMessage type="error" message="Không thể lưu UI labels lúc này. Kiểm tra lại database rồi thử lại." /> : null}
-      {params.error === "homepage-save-failed" ? <ActionMessage type="error" message="Không thể lưu homepage content lúc này. Kiểm tra lại database rồi thử lại." /> : null}
-      {params.error === "footer-save-failed" ? <ActionMessage type="error" message="Không thể lưu footer content lúc này. Kiểm tra lại database rồi thử lại." /> : null}
-      {params.error === "vehicle-page-save-failed" ? <ActionMessage type="error" message="Không thể lưu vehicle page settings lúc này. Kiểm tra lại database rồi thử lại." /> : null}
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <HomepageSettingsForm settings={homepage} />
-        <FooterSettingsForm settings={footer} />
-        <VehiclePageSettingsForm settings={vehiclePage} />
-        <BrandingSettingsForm settings={branding} />
-        <SearchUiLabelsForm labels={labels} />
-      </div>
     </div>
   );
 }

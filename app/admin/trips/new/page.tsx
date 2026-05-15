@@ -23,15 +23,15 @@ export default async function NewTripPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="eyebrow">Create trip</p>
+        <p className="eyebrow">Tạo chuyến xe</p>
         <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
-          New trip
+          Chuyến xe mới
         </h1>
       </div>
       {params.routeCreated ? (
         <ActionMessage
           type="success"
-          message="Route đã tạo xong. Thêm ít nhất một trip có trạng thái Active hoặc Sold out để tuyến này xuất hiện trong search."
+          message="Tuyến đã tạo xong. Thêm ít nhất một chuyến có trạng thái Đang bán hoặc Hết chỗ để tuyến này xuất hiện trong tìm kiếm."
         />
       ) : null}
       {params.error ? <ActionMessage type="error" message={params.error} /> : null}

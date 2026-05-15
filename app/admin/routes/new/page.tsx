@@ -7,13 +7,12 @@ export default async function NewRoutePage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="eyebrow">Create route</p>
+        <p className="eyebrow">Tạo tuyến</p>
         <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
-          New route
+          Tuyến mới
         </h1>
       </div>
       <RouteForm cities={cities} />
     </div>
   );
 }
-

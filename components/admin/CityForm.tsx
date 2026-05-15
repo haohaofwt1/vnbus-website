@@ -27,7 +27,7 @@ export function CityForm({ city }: CityFormProps) {
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Name</span>
+          <span className="text-sm font-medium text-slate-700">Tên thành phố</span>
           <input name="name" defaultValue={city?.name} className={inputClass} required />
         </label>
         <label className="space-y-2">
@@ -35,25 +35,25 @@ export function CityForm({ city }: CityFormProps) {
           <input name="slug" defaultValue={city?.slug} className={inputClass} required />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Country</span>
+          <span className="text-sm font-medium text-slate-700">Quốc gia</span>
           <input name="country" defaultValue={city?.country} className={inputClass} required />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Region</span>
+          <span className="text-sm font-medium text-slate-700">Khu vực</span>
           <input name="region" defaultValue={city?.region} className={inputClass} required />
         </label>
       </div>
 
       <AdminImageUploadField
         name="imageUrl"
-        label="Destination image"
+        label="Ảnh điểm đến"
         defaultValue={city?.imageUrl}
         folder="cities"
         required
       />
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Description</span>
+        <span className="text-sm font-medium text-slate-700">Mô tả</span>
         <textarea
           name="description"
           rows={6}
@@ -65,7 +65,7 @@ export function CityForm({ city }: CityFormProps) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">SEO title</span>
+          <span className="text-sm font-medium text-slate-700">Tiêu đề SEO</span>
           <input
             name="seoTitle"
             defaultValue={city?.seoTitle}
@@ -74,7 +74,7 @@ export function CityForm({ city }: CityFormProps) {
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">SEO description</span>
+          <span className="text-sm font-medium text-slate-700">Mô tả SEO</span>
           <textarea
             name="seoDescription"
             rows={4}
@@ -89,7 +89,7 @@ export function CityForm({ city }: CityFormProps) {
         type="submit"
         className="inline-flex rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
       >
-        {city ? "Update city" : "Create city"}
+        {city ? "Cập nhật thành phố" : "Tạo thành phố"}
       </button>
     </form>
   );

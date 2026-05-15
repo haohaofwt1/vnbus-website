@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { FilterSidebar } from "@/components/FilterSidebar";
 import { SearchResultsExperience } from "@/components/SearchResultsExperience";
 import { SearchSummaryBar } from "@/components/SearchSummaryBar";
 import { getSearchFormOptions, recordSearchQuery, searchTrips, type SearchFilters } from "@/lib/data";
@@ -152,6 +151,13 @@ export default async function SearchPage({
     ? searchData.vehicleTypes.find((item) => item.slug === filters.vehicleType)?.name ??
       copy.anyVehicle
     : copy.anyVehicle;
+  const routeDistance = rankedTrips.find((trip) => trip.route.distanceKm)?.route.distanceKm;
+  const averageDurationMinutes = rankedTrips.length
+    ? Math.round(rankedTrips.reduce((sum, trip) => sum + trip.duration, 0) / rankedTrips.length)
+    : 0;
+  const averageDuration = averageDurationMinutes
+    ? `${Math.floor(averageDurationMinutes / 60)}h${String(averageDurationMinutes % 60).padStart(2, "0")}`
+    : undefined;
 
   return (
     <>
@@ -170,6 +176,9 @@ export default async function SearchPage({
               departureDate: filters.departureDate,
               passengers: filters.passengers ?? "1",
               vehicleTypeLabel,
+              tripCount: rankedTrips.length,
+              distanceKm: routeDistance,
+              averageDuration,
             }}
             cities={searchData.cities}
             vehicleTypes={searchData.vehicleTypes}
@@ -183,63 +192,33 @@ export default async function SearchPage({
             }}
           />
 
-          <div className="grid gap-5 lg:grid-cols-[270px_1fr]">
-            <div>
-              <details className="group rounded-[24px] border border-[#E5EAF2] bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)] lg:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-[#071A33]">
-                  <span>{locale === "vi" ? "Bộ lọc" : "Filters"}</span>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#2563EB]">
-                    {locale === "vi" ? "Mở" : "Open"}
-                  </span>
-                </summary>
-                <div className="mt-4 max-h-[78vh] overflow-auto pr-1">
-                  <FilterSidebar
-                    filters={filters}
-                    operators={results.operators}
-                    pickupOptions={results.pickupOptions}
-                    dropoffOptions={results.dropoffOptions}
-                    amenityOptions={results.amenityOptions}
-                    vehicleTypes={searchData.vehicleTypes}
-                    locale={locale}
-                    uiLabels={searchUiLabels}
-                  />
-                </div>
-              </details>
-              <div className="hidden lg:block lg:sticky lg:top-24">
-                <FilterSidebar
-                  filters={filters}
-                  operators={results.operators}
-                  pickupOptions={results.pickupOptions}
-                  dropoffOptions={results.dropoffOptions}
-                  amenityOptions={results.amenityOptions}
-                  vehicleTypes={searchData.vehicleTypes}
-                  locale={locale}
-                  uiLabels={searchUiLabels}
-                />
+          <SearchResultsExperience
+            trips={rankedTrips}
+            smartMode={smartMode}
+            showRoute
+            departureDate={filters.departureDate}
+            returnDate={filters.returnDate}
+            passengers={Number(filters.passengers ?? 1)}
+            locale={locale}
+            uiLabels={searchUiLabels}
+            filters={filters}
+            summary={{ fromLabel, toLabel, vehicleTypeLabel }}
+            filterData={{
+              operators: results.operators,
+              pickupOptions: results.pickupOptions,
+              dropoffOptions: results.dropoffOptions,
+              amenityOptions: results.amenityOptions,
+              vehicleTypes: searchData.vehicleTypes,
+            }}
+            emptyState={
+              <div className="card-surface p-10 text-center">
+                <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
+                  {copy.noTrips}
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-muted">{copy.noTripsBody}</p>
               </div>
-            </div>
-
-            <SearchResultsExperience
-              trips={rankedTrips}
-              smartMode={smartMode}
-              showRoute
-              departureDate={filters.departureDate}
-              returnDate={filters.returnDate}
-              passengers={Number(filters.passengers ?? 1)}
-              locale={locale}
-              uiLabels={searchUiLabels}
-              filters={filters}
-              summary={{ fromLabel, toLabel, vehicleTypeLabel }}
-              emptyState={
-                <div className="card-surface p-10 text-center">
-                  <h2 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-ink">
-                    {copy.noTrips}
-                  </h2>
-                  <p className="mt-4 text-sm leading-7 text-muted">{copy.noTripsBody}</p>
-                </div>
-              }
-            />
-          </div>
+            }
+          />
         </div>
       </section>
     </>

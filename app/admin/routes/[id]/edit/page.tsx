@@ -35,22 +35,22 @@ export default async function EditRoutePage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="eyebrow">Edit route</p>
+        <p className="eyebrow">Chỉnh sửa tuyến</p>
         <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
           {route.slug}
         </h1>
       </div>
       {query.saved ? (
-        <ActionMessage type="success" message="Route đã được cập nhật." />
+        <ActionMessage type="success" message="Tuyến đã được cập nhật." />
       ) : null}
       <div className="card-surface flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-ink">
-            Search chỉ hiển thị trip, không hiển thị route trống.
+            Trang tìm kiếm chỉ hiển thị chuyến xe, không hiển thị tuyến trống.
           </p>
           <p className="text-sm text-slate-600">
-            Route này hiện có {tripCount} trip, trong đó {publicTripCount} trip đang public
-            (`Active` hoặc `Sold out`). Nếu chưa có trip public thì khách sẽ không tìm thấy
+            Tuyến này hiện có {tripCount} chuyến, trong đó {publicTripCount} chuyến đang public
+            (`Đang bán` hoặc `Hết chỗ`). Nếu chưa có chuyến public thì khách sẽ không tìm thấy
             tuyến này ở trang search.
           </p>
         </div>
@@ -58,7 +58,7 @@ export default async function EditRoutePage({
           href={`/admin/trips/new?routeId=${route.id}`}
           className="inline-flex items-center justify-center rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
         >
-          Create trip for this route
+          Tạo chuyến cho tuyến này
         </Link>
       </div>
       <RouteForm route={route} cities={cities} />

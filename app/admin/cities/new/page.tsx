@@ -4,13 +4,12 @@ export default function NewCityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="eyebrow">Create city</p>
+        <p className="eyebrow">Tạo thành phố</p>
         <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
-          New city
+          Thành phố mới
         </h1>
       </div>
       <CityForm />
     </div>
   );
 }
-

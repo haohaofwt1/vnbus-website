@@ -57,30 +57,30 @@ export function TripForm({
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Route</span>
+          <span className="text-sm font-medium text-slate-700">Tuyến</span>
           <select
             name="routeId"
             defaultValue={trip?.routeId ?? defaultRouteId}
             className={inputClass}
             required
           >
-            <option value="">Select route</option>
+            <option value="">Chọn tuyến</option>
             {routes.map((route) => (
               <option key={route.id} value={route.id}>
-                {route.fromCity.name} to {route.toCity.name}
+                {route.fromCity.name} → {route.toCity.name}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Operator</span>
+          <span className="text-sm font-medium text-slate-700">Nhà xe</span>
           <select
             name="operatorId"
             defaultValue={trip?.operatorId}
             className={inputClass}
             required
           >
-            <option value="">Select operator</option>
+            <option value="">Chọn nhà xe</option>
             {operators.map((operator) => (
               <option key={operator.id} value={operator.id}>
                 {operator.name}
@@ -89,14 +89,14 @@ export function TripForm({
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Vehicle type</span>
+          <span className="text-sm font-medium text-slate-700">Loại xe</span>
           <select
             name="vehicleTypeId"
             defaultValue={trip?.vehicleTypeId}
             className={inputClass}
             required
           >
-            <option value="">Select type</option>
+            <option value="">Chọn loại xe</option>
             {vehicleTypes.map((vehicleType) => (
               <option key={vehicleType.id} value={vehicleType.id}>
                 {vehicleType.name}
@@ -105,7 +105,7 @@ export function TripForm({
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Departure time</span>
+          <span className="text-sm font-medium text-slate-700">Giờ khởi hành</span>
           <input
             type="datetime-local"
             name="departureTime"
@@ -115,7 +115,7 @@ export function TripForm({
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Arrival time</span>
+          <span className="text-sm font-medium text-slate-700">Giờ đến</span>
           <input
             type="datetime-local"
             name="arrivalTime"
@@ -125,7 +125,7 @@ export function TripForm({
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Duration (minutes)</span>
+          <span className="text-sm font-medium text-slate-700">Thời lượng (phút)</span>
           <input
             type="number"
             name="duration"
@@ -135,7 +135,7 @@ export function TripForm({
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Price</span>
+          <span className="text-sm font-medium text-slate-700">Giá vé</span>
           <input
             type="number"
             name="price"
@@ -145,7 +145,7 @@ export function TripForm({
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Currency</span>
+          <span className="text-sm font-medium text-slate-700">Tiền tệ</span>
           <input
             name="currency"
             defaultValue={trip?.currency ?? "VND"}
@@ -154,7 +154,7 @@ export function TripForm({
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Available seats</span>
+          <span className="text-sm font-medium text-slate-700">Số chỗ còn lại</span>
           <input
             type="number"
             name="availableSeats"
@@ -164,43 +164,43 @@ export function TripForm({
           />
         </label>
         <label className="space-y-2 lg:col-span-2 xl:col-span-1">
-          <span className="text-sm font-medium text-slate-700">Status</span>
+          <span className="text-sm font-medium text-slate-700">Trạng thái</span>
           <select name="status" defaultValue={trip?.status ?? "ACTIVE"} className={inputClass}>
-            <option value="ACTIVE">Active</option>
-            <option value="SOLD_OUT">Sold out</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="DRAFT">Draft</option>
+            <option value="ACTIVE">Đang bán</option>
+            <option value="SOLD_OUT">Hết chỗ</option>
+            <option value="CANCELLED">Đã hủy</option>
+            <option value="DRAFT">Nháp</option>
           </select>
         </label>
       </div>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Pickup point</span>
+        <span className="text-sm font-medium text-slate-700">Điểm đón</span>
         <input
           name="pickupPoint"
           defaultValue={trip?.pickupPoint}
           className={inputClass}
           minLength={3}
-          placeholder="e.g. Old Quarter pickup office"
+          placeholder="Ví dụ: Văn phòng trung tâm Huế"
           required
         />
       </label>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Drop-off point</span>
+        <span className="text-sm font-medium text-slate-700">Điểm trả</span>
         <input
           name="dropoffPoint"
           defaultValue={trip?.dropoffPoint}
           className={inputClass}
           minLength={3}
-          placeholder="e.g. Central bus station"
+          placeholder="Ví dụ: Bến xe trung tâm Phong Nha"
           required
         />
       </label>
 
       <label className="block space-y-2">
         <span className="text-sm font-medium text-slate-700">
-          Amenities (comma separated)
+          Tiện ích (ngăn cách bằng dấu phẩy)
         </span>
         <textarea
           name="amenities"
@@ -215,7 +215,7 @@ export function TripForm({
         type="submit"
         className="inline-flex rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
       >
-        {trip ? "Update trip" : "Create trip"}
+        {trip ? "Cập nhật chuyến xe" : "Tạo chuyến xe"}
       </button>
     </form>
   );

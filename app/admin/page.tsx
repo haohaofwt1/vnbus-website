@@ -15,7 +15,7 @@ export default async function AdminDashboardPage() {
         title="VNBus command center"
         description="Open a module, monitor booking exceptions, and move daily travel operations from request to payment to confirmed ticket."
         primaryAction={{ href: "/admin/bookings", label: "Manage bookings" }}
-        secondaryAction={{ href: "/admin/payments", label: "Payment settings" }}
+        secondaryAction={{ href: "/admin/content/payments", label: "Payment settings" }}
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

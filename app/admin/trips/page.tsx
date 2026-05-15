@@ -34,19 +34,19 @@ export default async function AdminTripsPage({ searchParams }: { searchParams: P
   const returnTo = adminReturnTo("/admin/trips", { page: params.page, q: params.q, filter: params.filter, groupBy: params.groupBy });
 
   return <div className="space-y-6">
-    <AdminModuleHeader eyebrow="Inventory" title="Trips" description="Control dated departures, available seats, vehicle assignments and pricing." primaryAction={{ href: "/admin/trips/new", label: "New trip" }} />
-    <AdminBulkResultMessage deleted={params.bulkDeleted} error={params.bulkError} label="trip" />
-    <section className="grid gap-4 md:grid-cols-3"><AdminMetricCard label="Current view" value={total} /><AdminMetricCard label="Active trips" value={active} /><AdminMetricCard label="Low seats" value={lowSeats} helper="Active trips with 3 or fewer seats" /></section>
-    <AdminListToolbar basePath="/admin/trips" search={params.q} activeFilter={params.filter} groupBy={params.groupBy} filters={[{ label: "Active", value: "active" }, { label: "Low seats", value: "low-seats" }, { label: "Sold out", value: "sold-out" }, { label: "Draft", value: "draft" }, { label: "Cancelled", value: "cancelled" }]} groups={[{ label: "Route", value: "route" }, { label: "Operator", value: "operator" }, { label: "Vehicle", value: "vehicle" }]} views={[{ label: "List", value: "list" }]} />
-    <AdminBulkDeleteBar entity="trips" entityLabel="trip" selectionName="tripIds" totalOnPage={trips.length} returnTo={returnTo} />
-    <DataTable columns={[{ key: "route", label: "Route" }, { key: "operator", label: "Operator" }, { key: "departure", label: "Departure" }, { key: "seats", label: "Seats" }, { key: "price", label: "Price" }, { key: "status", label: "Status" }, { key: "action", label: "Action", align: "right" }]} rows={trips.map((trip) => ({
-      route: <div><p className="font-black text-ink">{trip.route.fromCity.name} to {trip.route.toCity.name}</p><p className="text-slate-500">{trip.pickupPoint}</p></div>,
+    <AdminModuleHeader eyebrow="Nguồn cung" title="Chuyến xe" description="Quản lý giờ chạy, số chỗ, nhà xe, loại xe và giá vé từng chuyến." primaryAction={{ href: "/admin/trips/new", label: "Tạo chuyến xe" }} />
+    <AdminBulkResultMessage deleted={params.bulkDeleted} error={params.bulkError} label="chuyến xe" />
+    <section className="grid gap-4 md:grid-cols-3"><AdminMetricCard label="Đang hiển thị" value={total} /><AdminMetricCard label="Chuyến đang bán" value={active} /><AdminMetricCard label="Sắp hết chỗ" value={lowSeats} helper="Chuyến đang bán còn 3 chỗ trở xuống" /></section>
+    <AdminListToolbar basePath="/admin/trips" search={params.q} activeFilter={params.filter} groupBy={params.groupBy} filters={[{ label: "Đang bán", value: "active" }, { label: "Sắp hết chỗ", value: "low-seats" }, { label: "Hết chỗ", value: "sold-out" }, { label: "Nháp", value: "draft" }, { label: "Đã hủy", value: "cancelled" }]} groups={[{ label: "Tuyến", value: "route" }, { label: "Nhà xe", value: "operator" }, { label: "Loại xe", value: "vehicle" }]} views={[{ label: "Danh sách", value: "list" }]} />
+    <AdminBulkDeleteBar entity="trips" entityLabel="chuyến xe" selectionName="tripIds" totalOnPage={trips.length} returnTo={returnTo} />
+    <DataTable columns={[{ key: "route", label: "Tuyến" }, { key: "operator", label: "Nhà xe" }, { key: "departure", label: "Khởi hành" }, { key: "seats", label: "Chỗ" }, { key: "price", label: "Giá" }, { key: "status", label: "Trạng thái" }, { key: "action", label: "Thao tác", align: "right" }]} rows={trips.map((trip) => ({
+      route: <div><p className="font-black text-ink">{trip.route.fromCity.name} → {trip.route.toCity.name}</p><p className="text-slate-500">{trip.pickupPoint}</p></div>,
       operator: <div><p className="font-semibold text-ink">{trip.operator.name}</p><p className="text-slate-500">{trip.vehicleType.name}</p></div>,
-      departure: <div><p>{formatDateTime(trip.departureTime)}</p><p className="text-slate-500">Arrives {formatDateTime(trip.arrivalTime)}</p></div>,
+      departure: <div><p>{formatDateTime(trip.departureTime)}</p><p className="text-slate-500">Đến {formatDateTime(trip.arrivalTime)}</p></div>,
       seats: <span className="font-black text-ink">{trip.availableSeats}</span>,
       price: formatCurrency(trip.price, trip.currency),
       status: <StatusBadge status={trip.status} />,
-      action: <Link href={`/admin/trips/${trip.id}/edit`} className="font-black text-brand-700">Edit</Link>,
-    }))} emptyMessage="No trips found." pagination={{ page: currentPage, totalPages: pagination.totalPages, basePath: "/admin/trips" }} selectionName="tripIds" rowSelectionValues={trips.map((trip) => trip.id)} />
+      action: <Link href={`/admin/trips/${trip.id}/edit`} className="font-black text-brand-700">Sửa</Link>,
+    }))} emptyMessage="Không tìm thấy chuyến xe." pagination={{ page: currentPage, totalPages: pagination.totalPages, basePath: "/admin/trips" }} selectionName="tripIds" rowSelectionValues={trips.map((trip) => trip.id)} />
   </div>;
 }

@@ -102,10 +102,26 @@ export function SearchUiLabelsForm({
         <LocaleFields prefix="tripHideDetails" label="Hide details" values={labels.tripCard.hideDetails} />
         <LocaleFields prefix="tripRequestBooking" label="Request booking" values={labels.tripCard.requestBooking} />
         <LocaleFields prefix="tripManual" label="Manual confirmation before payment" values={labels.tripCard.manual} />
+        <LocaleFields prefix="tripFitScore" label="Fit score" values={labels.tripCard.fitScore} />
+        <LocaleFields prefix="tripAiNotePrefix" label="AI note prefix" values={labels.tripCard.aiNotePrefix} />
+        <LocaleFields prefix="tripRatingReason" label="AI reason: rating" values={labels.tripCard.ratingReason} />
+        <LocaleFields prefix="tripVerifiedReason" label="AI reason: verified" values={labels.tripCard.verifiedReason} />
+        <LocaleFields prefix="tripComfortReason" label="AI reason: comfort" values={labels.tripCard.comfortReason} />
+        <LocaleFields prefix="tripPickupReason" label="AI reason: pickup" values={labels.tripCard.pickupReason} />
+        <LocaleFields prefix="tripSeatsReason" label="AI reason: seats" values={labels.tripCard.seatsReason} />
         <LocaleFields prefix="tripRoute" label="Route" values={labels.tripCard.route} />
         <LocaleFields prefix="tripTourist" label="Tourist-friendly" values={labels.tripCard.tourist} />
         <LocaleFields prefix="tripPickup" label="Pickup" values={labels.tripCard.pickup} />
         <LocaleFields prefix="tripDropoff" label="Drop-off" values={labels.tripCard.dropoff} />
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-ink">Route intelligence panel</h3>
+        <LocaleFields prefix="routeMapTitle" label="Map title" values={labels.routePanel.mapTitle} />
+        <LocaleFields prefix="routeInfoTitle" label="Route info title" values={labels.routePanel.routeInfoTitle} />
+        <LocaleFields prefix="routeTipsTitle" label="Tips title" values={labels.routePanel.tipsTitle} />
+        <LocaleFields prefix="routeDefaultTipBody" label="Default tip body" values={labels.routePanel.defaultTipBody} />
+        <LocaleFields prefix="routeNoCoordinates" label="No coordinates message" values={labels.routePanel.noCoordinates} />
       </div>
 
       <button

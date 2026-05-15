@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { BusFront, Globe2, Handshake, Headphones, Menu, Ticket, X } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
   withLang,
 } from "@/lib/i18n";
 import type { BrandingSettings } from "@/lib/site-settings";
+import { useUrlSearch } from "@/lib/use-url-search";
 
 const publicLocaleLabels = {
   en: "EN",
@@ -54,11 +55,7 @@ const headerCopy = {
 export function Header({ branding }: { branding?: BrandingSettings | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const searchString = useSyncExternalStore(
-    () => () => {},
-    () => window.location.search,
-    () => "",
-  );
+  const searchString = useUrlSearch();
 
   const searchParams = new URLSearchParams(searchString);
   const locale = resolveLocale(searchParams.get("lang"));

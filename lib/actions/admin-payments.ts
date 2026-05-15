@@ -109,6 +109,7 @@ export async function updatePaymentSettingsAction(formData: FormData) {
   });
 
   revalidatePath("/admin/payments");
+  revalidatePath("/admin/content/payments");
   revalidatePath("/checkout");
-  redirect("/admin/payments?settingsSaved=1");
+  redirect("/admin/content/payments?saved=1");
 }

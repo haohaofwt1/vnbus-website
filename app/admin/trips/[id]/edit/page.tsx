@@ -32,12 +32,12 @@ export default async function EditTripPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="eyebrow">Edit trip</p>
+        <p className="eyebrow">Chỉnh sửa chuyến xe</p>
         <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
           {trip.id}
         </h1>
       </div>
-      {pageParams.saved ? <ActionMessage type="success" message="Trip saved." /> : null}
+      {pageParams.saved ? <ActionMessage type="success" message="Chuyến xe đã được lưu." /> : null}
       {pageParams.error ? <ActionMessage type="error" message={pageParams.error} /> : null}
       <TripForm trip={trip} routes={routes} operators={operators} vehicleTypes={vehicleTypes} />
     </div>

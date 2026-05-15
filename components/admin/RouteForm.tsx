@@ -20,6 +20,8 @@ type RouteFormProps = {
     imageUrl: string;
     shortDescription: string;
     longDescription: string;
+    luggageNotes?: string;
+    policyNotes?: string;
     seoTitle: string;
     seoDescription: string;
     status: string;
@@ -43,14 +45,14 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           <input name="slug" defaultValue={route?.slug} className={inputClass} required />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">From city</span>
+          <span className="text-sm font-medium text-slate-700">Điểm đi</span>
           <select
             name="fromCityId"
             defaultValue={route?.fromCityId}
             className={inputClass}
             required
           >
-            <option value="">Select city</option>
+            <option value="">Chọn thành phố</option>
             {cities.map((city) => (
               <option key={city.id} value={city.id}>
                 {city.name}
@@ -59,14 +61,14 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">To city</span>
+          <span className="text-sm font-medium text-slate-700">Điểm đến</span>
           <select
             name="toCityId"
             defaultValue={route?.toCityId}
             className={inputClass}
             required
           >
-            <option value="">Select city</option>
+            <option value="">Chọn thành phố</option>
             {cities.map((city) => (
               <option key={city.id} value={city.id}>
                 {city.name}
@@ -75,7 +77,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Country from</span>
+          <span className="text-sm font-medium text-slate-700">Quốc gia đi</span>
           <input
             name="countryFrom"
             defaultValue={route?.countryFrom}
@@ -84,7 +86,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Country to</span>
+          <span className="text-sm font-medium text-slate-700">Quốc gia đến</span>
           <input
             name="countryTo"
             defaultValue={route?.countryTo}
@@ -93,15 +95,15 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Status</span>
+          <span className="text-sm font-medium text-slate-700">Trạng thái</span>
           <select name="status" defaultValue={route?.status ?? "ACTIVE"} className={inputClass}>
-            <option value="ACTIVE">Active</option>
-            <option value="DRAFT">Draft</option>
-            <option value="ARCHIVED">Archived</option>
+            <option value="ACTIVE">Đang hoạt động</option>
+            <option value="DRAFT">Nháp</option>
+            <option value="ARCHIVED">Lưu trữ</option>
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Distance (km)</span>
+          <span className="text-sm font-medium text-slate-700">Khoảng cách (km)</span>
           <input
             type="number"
             name="distanceKm"
@@ -111,7 +113,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Estimated duration</span>
+          <span className="text-sm font-medium text-slate-700">Thời lượng dự kiến</span>
           <input
             name="estimatedDuration"
             defaultValue={route?.estimatedDuration}
@@ -120,7 +122,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Price from</span>
+          <span className="text-sm font-medium text-slate-700">Giá từ</span>
           <input
             type="number"
             name="priceFrom"
@@ -130,7 +132,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Currency</span>
+          <span className="text-sm font-medium text-slate-700">Tiền tệ</span>
           <input
             name="currency"
             defaultValue={route?.currency ?? "VND"}
@@ -140,20 +142,20 @@ export function RouteForm({ route, cities }: RouteFormProps) {
         </label>
         <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
           <input type="checkbox" name="isInternational" defaultChecked={route?.isInternational} />
-          <span>International route</span>
+          <span>Tuyến quốc tế</span>
         </label>
       </div>
 
       <AdminImageUploadField
         name="imageUrl"
-        label="Route image"
+        label="Ảnh tuyến"
         defaultValue={route?.imageUrl}
         folder="routes"
         hint="Ảnh này được dùng ưu tiên trên trang Tuyến xe. Nếu để trống, website sẽ dùng ảnh thành phố đến hoặc ảnh mặc định."
       />
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Short description</span>
+        <span className="text-sm font-medium text-slate-700">Mô tả ngắn</span>
         <textarea
           name="shortDescription"
           rows={3}
@@ -164,7 +166,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
       </label>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Long description</span>
+        <span className="text-sm font-medium text-slate-700">Mô tả chi tiết</span>
         <textarea
           name="longDescription"
           rows={8}
@@ -175,8 +177,32 @@ export function RouteForm({ route, cities }: RouteFormProps) {
       </label>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-slate-700">Hành lý & lưu ý trong popup chuyến</span>
+          <textarea
+            name="luggageNotes"
+            rows={6}
+            defaultValue={route?.luggageNotes}
+            className={inputClass}
+            placeholder="Mỗi dòng một lưu ý. Ví dụ: Hành lý tiêu chuẩn 1 vali + 1 túi xách..."
+          />
+        </label>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-slate-700">Chính sách trong popup chuyến</span>
+          <textarea
+            name="policyNotes"
+            rows={6}
+            defaultValue={route?.policyNotes}
+            className={inputClass}
+            placeholder="Mỗi dòng một chính sách. Ví dụ: Đổi/hủy tùy theo thời điểm khởi hành..."
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">SEO title</span>
+          <span className="text-sm font-medium text-slate-700">Tiêu đề SEO</span>
           <input
             name="seoTitle"
             defaultValue={route?.seoTitle}
@@ -185,7 +211,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
           />
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">SEO description</span>
+          <span className="text-sm font-medium text-slate-700">Mô tả SEO</span>
           <textarea
             name="seoDescription"
             rows={3}
@@ -200,7 +226,7 @@ export function RouteForm({ route, cities }: RouteFormProps) {
         type="submit"
         className="inline-flex rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
       >
-        {route ? "Update route" : "Create route"}
+        {route ? "Cập nhật tuyến" : "Tạo tuyến"}
       </button>
     </form>
   );

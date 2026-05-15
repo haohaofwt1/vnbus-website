@@ -539,9 +539,22 @@ export async function searchTrips(filters: SearchFilters) {
           include: {
             fromCity: true,
             toCity: true,
+            reviews: {
+              where: { status: ReviewStatus.PUBLISHED },
+              orderBy: { createdAt: "desc" },
+              take: 3,
+            },
           },
         },
-        operator: true,
+        operator: {
+          include: {
+            reviews: {
+              where: { status: ReviewStatus.PUBLISHED },
+              orderBy: { createdAt: "desc" },
+              take: 3,
+            },
+          },
+        },
         vehicleType: true,
       },
       orderBy: [{ price: "asc" }, { departureTime: "asc" }],

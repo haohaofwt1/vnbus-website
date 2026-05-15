@@ -17,7 +17,7 @@ export default async function EditCityPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="eyebrow">Edit city</p>
+        <p className="eyebrow">Chỉnh sửa thành phố</p>
         <h1 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold tracking-tight text-ink">
           {city.name}
         </h1>
@@ -26,4 +26,3 @@ export default async function EditCityPage({
     </div>
   );
 }
-
