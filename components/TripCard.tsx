@@ -36,6 +36,10 @@ export type TripCardTrip = {
   currency: string;
   pickupPoint: string;
   dropoffPoint: string;
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
+  dropoffLatitude?: number | null;
+  dropoffLongitude?: number | null;
   availableSeats: number;
   amenities: string[];
   operator: {
@@ -67,6 +71,15 @@ export type TripCardTrip = {
     isInternational?: boolean;
     distanceKm?: number;
     estimatedDuration?: string;
+    commonRoad?: string;
+    routePolyline?: string;
+    borderCheckpointName?: string;
+    borderCheckpointLatitude?: number | null;
+    borderCheckpointLongitude?: number | null;
+    travelAdvisory?: string;
+    landmarkMarkers?: unknown;
+    trafficStatus?: string;
+    trafficDelayMinutes?: number;
     shortDescription?: string;
     longDescription?: string;
     luggageNotes?: string;

@@ -24,6 +24,43 @@ function resolveTripErrorMessage(error: unknown) {
   return "Unable to save the trip right now.";
 }
 
+function tripMutationData(parsed: ReturnType<typeof adminTripSchema.parse>) {
+  const {
+    routeId,
+    operatorId,
+    vehicleTypeId,
+    pickupLatitude,
+    pickupLongitude,
+    dropoffLatitude,
+    dropoffLongitude,
+    ...data
+  } = parsed;
+
+  void pickupLatitude;
+  void pickupLongitude;
+  void dropoffLatitude;
+  void dropoffLongitude;
+
+  return {
+    ...data,
+    route: { connect: { id: routeId } },
+    operator: { connect: { id: operatorId } },
+    vehicleType: { connect: { id: vehicleTypeId } },
+  };
+}
+
+async function updateTripMapData(tripId: string, parsed: ReturnType<typeof adminTripSchema.parse>) {
+  await prisma.$executeRaw`
+    UPDATE "Trip"
+    SET
+      "pickupLatitude" = ${parsed.pickupLatitude ?? null},
+      "pickupLongitude" = ${parsed.pickupLongitude ?? null},
+      "dropoffLatitude" = ${parsed.dropoffLatitude ?? null},
+      "dropoffLongitude" = ${parsed.dropoffLongitude ?? null}
+    WHERE "id" = ${tripId}
+  `;
+}
+
 export async function createTripAction(formData: FormData) {
   let trip:
     | {
@@ -34,7 +71,8 @@ export async function createTripAction(formData: FormData) {
   try {
     const session = await requireAdminUser();
     const parsed = adminTripSchema.parse(parseFormData(formData));
-    trip = await prisma.trip.create({ data: parsed, select: { id: true } });
+    trip = await prisma.trip.create({ data: tripMutationData(parsed), select: { id: true } });
+    await updateTripMapData(trip.id, parsed);
 
     await createAuditLog({
       userId: session.id,
@@ -62,8 +100,9 @@ export async function updateTripAction(formData: FormData) {
 
     await prisma.trip.update({
       where: { id },
-      data: parsed,
+      data: tripMutationData(parsed),
     });
+    await updateTripMapData(id, parsed);
 
     await createAuditLog({
       userId: session.id,

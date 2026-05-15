@@ -134,6 +134,15 @@ model Route {
   priceFrom         Int
   currency          String
   imageUrl          String         @default("")
+  commonRoad        String         @default("")
+  routePolyline     String         @default("")
+  borderCheckpointName      String @default("")
+  borderCheckpointLatitude  Float?
+  borderCheckpointLongitude Float?
+  travelAdvisory    String         @default("")
+  landmarkMarkers   Json           @default("[]")
+  trafficStatus     String         @default("")
+  trafficDelayMinutes Int          @default(0)
   shortDescription  String
   longDescription   String
   luggageNotes      String         @default("")
@@ -207,6 +216,10 @@ model Trip {
   currency       String
   pickupPoint    String
   dropoffPoint   String
+  pickupLatitude  Float?
+  pickupLongitude Float?
+  dropoffLatitude  Float?
+  dropoffLongitude Float?
   availableSeats Int
   amenities      String[]
   status         TripStatus  @default(ACTIVE)

@@ -4,6 +4,12 @@ import { AdminImageUploadField } from "./AdminImageUploadField";
 const inputClass =
   "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm";
 
+function jsonTextareaValue(value: unknown) {
+  if (!value) return "[]";
+  if (typeof value === "string") return value;
+  return JSON.stringify(value, null, 2);
+}
+
 type RouteFormProps = {
   route?: {
     id: string;
@@ -18,6 +24,15 @@ type RouteFormProps = {
     priceFrom: number;
     currency: string;
     imageUrl: string;
+    commonRoad?: string;
+    routePolyline?: string;
+    borderCheckpointName?: string;
+    borderCheckpointLatitude?: number | null;
+    borderCheckpointLongitude?: number | null;
+    travelAdvisory?: string;
+    landmarkMarkers?: unknown;
+    trafficStatus?: string;
+    trafficDelayMinutes?: number;
     shortDescription: string;
     longDescription: string;
     luggageNotes?: string;
@@ -153,6 +168,118 @@ export function RouteForm({ route, cities }: RouteFormProps) {
         folder="routes"
         hint="Ảnh này được dùng ưu tiên trên trang Tuyến xe. Nếu để trống, website sẽ dùng ảnh thành phố đến hoặc ảnh mặc định."
       />
+
+      <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+        <div>
+          <h2 className="font-[family-name:var(--font-heading)] text-xl font-bold text-ink">
+            Dữ liệu bản đồ hành trình
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Dùng cho 3D Journey Map, bản đồ lớn và thông tin tuyến. Có thể để trống, frontend sẽ dùng fallback an toàn.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Đường phổ biến / route badge</span>
+            <input
+              name="commonRoad"
+              defaultValue={route?.commonRoad}
+              className={inputClass}
+              placeholder="Ví dụ: QL1A, AH16"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Trạng thái giao thông</span>
+            <input
+              name="trafficStatus"
+              defaultValue={route?.trafficStatus}
+              className={inputClass}
+              placeholder="Ví dụ: Bình thường, Có thể chậm tại cửa khẩu"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Delay dự kiến (phút)</span>
+            <input
+              type="number"
+              name="trafficDelayMinutes"
+              defaultValue={route?.trafficDelayMinutes ?? 0}
+              min={0}
+              className={inputClass}
+            />
+          </label>
+        </div>
+
+        <label className="mt-4 block space-y-2">
+          <span className="text-sm font-medium text-slate-700">Route polyline thật</span>
+          <textarea
+            name="routePolyline"
+            rows={4}
+            defaultValue={route?.routePolyline}
+            className={inputClass}
+            placeholder="Encoded polyline hoặc GeoJSON/polyline string từ Mapbox/Google/OSRM"
+          />
+        </label>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Cửa khẩu / checkpoint</span>
+            <input
+              name="borderCheckpointName"
+              defaultValue={route?.borderCheckpointName}
+              className={inputClass}
+              placeholder="Ví dụ: Lao Bảo - Dansavanh"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Checkpoint latitude</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              name="borderCheckpointLatitude"
+              defaultValue={route?.borderCheckpointLatitude ?? ""}
+              className={inputClass}
+              placeholder="16.626..."
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Checkpoint longitude</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              name="borderCheckpointLongitude"
+              defaultValue={route?.borderCheckpointLongitude ?? ""}
+              className={inputClass}
+              placeholder="106.590..."
+            />
+          </label>
+        </div>
+
+        <label className="mt-4 block space-y-2">
+          <span className="text-sm font-medium text-slate-700">Travel advisory theo tuyến</span>
+          <textarea
+            name="travelAdvisory"
+            rows={4}
+            defaultValue={route?.travelAdvisory}
+            className={inputClass}
+            placeholder="Ví dụ: Khách đi Lào nên kiểm tra hộ chiếu/visa và có mặt sớm hơn tại điểm đón."
+          />
+        </label>
+
+        <label className="mt-4 block space-y-2">
+          <span className="text-sm font-medium text-slate-700">Landmark markers (JSON array)</span>
+          <textarea
+            name="landmarkMarkers"
+            rows={7}
+            defaultValue={jsonTextareaValue(route?.landmarkMarkers)}
+            className={`${inputClass} font-mono text-xs`}
+            placeholder='[{"name":"Lao Bao Border Gate","lat":16.626,"lng":106.59,"type":"border","imageUrl":""}]'
+          />
+          <span className="block text-xs leading-5 text-slate-500">
+            Mỗi marker nên có name, lat, lng, type, imageUrl. Field này lưu JSON để sau này map thật dùng trực tiếp.
+          </span>
+        </label>
+      </section>
 
       <label className="block space-y-2">
         <span className="text-sm font-medium text-slate-700">Mô tả ngắn</span>

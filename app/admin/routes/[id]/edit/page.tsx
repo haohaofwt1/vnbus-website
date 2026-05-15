@@ -5,6 +5,18 @@ import { ActionMessage } from "@/components/admin/ActionMessage";
 import { RouteForm } from "@/components/admin/RouteForm";
 import { prisma } from "@/lib/prisma";
 
+type RouteMapData = {
+  commonRoad: string;
+  routePolyline: string;
+  borderCheckpointName: string;
+  borderCheckpointLatitude: number | null;
+  borderCheckpointLongitude: number | null;
+  travelAdvisory: string;
+  landmarkMarkers: unknown;
+  trafficStatus: string;
+  trafficDelayMinutes: number;
+};
+
 export default async function EditRoutePage({
   params,
   searchParams,
@@ -14,8 +26,23 @@ export default async function EditRoutePage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const [route, cities, tripCount, publicTripCount] = await Promise.all([
+  const [route, routeMapRows, cities, tripCount, publicTripCount] = await Promise.all([
     prisma.route.findUnique({ where: { id } }),
+    prisma.$queryRaw<RouteMapData[]>`
+      SELECT
+        "commonRoad",
+        "routePolyline",
+        "borderCheckpointName",
+        "borderCheckpointLatitude",
+        "borderCheckpointLongitude",
+        "travelAdvisory",
+        "landmarkMarkers",
+        "trafficStatus",
+        "trafficDelayMinutes"
+      FROM "Route"
+      WHERE "id" = ${id}
+      LIMIT 1
+    `,
     prisma.city.findMany({ orderBy: { name: "asc" } }),
     prisma.trip.count({ where: { routeId: id } }),
     prisma.trip.count({
@@ -31,6 +58,11 @@ export default async function EditRoutePage({
   if (!route) {
     notFound();
   }
+
+  const routeWithMapData = {
+    ...route,
+    ...(routeMapRows[0] ?? {}),
+  };
 
   return (
     <div className="space-y-6">
@@ -61,7 +93,7 @@ export default async function EditRoutePage({
           Tạo chuyến cho tuyến này
         </Link>
       </div>
-      <RouteForm route={route} cities={cities} />
+      <RouteForm route={routeWithMapData} cities={cities} />
     </div>
   );
 }

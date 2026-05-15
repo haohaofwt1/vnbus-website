@@ -23,6 +23,47 @@ const optionalNumber = z.preprocess((value) => {
   return value;
 }, z.coerce.number().int().min(0).optional());
 
+const optionalFloat = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    return value.trim().replace(",", ".");
+  }
+
+  return value;
+}, z.coerce.number().optional());
+
+const optionalLatitude = optionalFloat.refine((value) => value === undefined || (value >= -90 && value <= 90), {
+  message: "Latitude must be between -90 and 90.",
+});
+
+const optionalLongitude = optionalFloat.refine((value) => value === undefined || (value >= -180 && value <= 180), {
+  message: "Longitude must be between -180 and 180.",
+});
+
+const jsonArraySchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value, ctx) => {
+    if (!value) return [];
+
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // handled below
+    }
+
+    ctx.addIssue({
+      code: "custom",
+      message: "Must be a valid JSON array.",
+    });
+    return z.NEVER;
+  });
+
 const stringListSchema = z
   .string()
   .optional()
@@ -82,6 +123,15 @@ export const adminRouteSchema = z.object({
   priceFrom: z.coerce.number().int().min(1),
   currency: z.string().trim().min(3).max(3),
   imageUrl: z.string().trim().optional().default(""),
+  commonRoad: z.string().trim().optional().default(""),
+  routePolyline: z.string().trim().optional().default(""),
+  borderCheckpointName: z.string().trim().optional().default(""),
+  borderCheckpointLatitude: optionalLatitude,
+  borderCheckpointLongitude: optionalLongitude,
+  travelAdvisory: z.string().trim().optional().default(""),
+  landmarkMarkers: jsonArraySchema,
+  trafficStatus: z.string().trim().optional().default(""),
+  trafficDelayMinutes: z.coerce.number().int().min(0).optional().default(0),
   shortDescription: z.string().trim().min(12),
   longDescription: z.string().trim().min(40),
   luggageNotes: z.string().trim().optional().default(""),
@@ -102,6 +152,10 @@ export const adminTripSchema = z.object({
   currency: z.string().trim().min(3).max(3),
   pickupPoint: z.string().trim().min(3, "Pickup point must be at least 3 characters."),
   dropoffPoint: z.string().trim().min(3, "Drop-off point must be at least 3 characters."),
+  pickupLatitude: optionalLatitude,
+  pickupLongitude: optionalLongitude,
+  dropoffLatitude: optionalLatitude,
+  dropoffLongitude: optionalLongitude,
   availableSeats: z.coerce.number().int().min(0),
   amenities: stringListSchema,
   status: z.enum(["ACTIVE", "SOLD_OUT", "CANCELLED", "DRAFT"]),
@@ -306,5 +360,26 @@ export const adminSearchUiLabelsSchema = z.object({
   routeTipsTitle: localeLabelSchema,
   routeDefaultTipBody: localeLabelSchema,
   routeNoCoordinates: localeLabelSchema,
+  routeOverview: localeLabelSchema,
+  routeSelectedTrip: localeLabelSchema,
+  routeDistance: localeLabelSchema,
+  routeDuration: localeLabelSchema,
+  routeAverageDuration: localeLabelSchema,
+  routeCommonRoad: localeLabelSchema,
+  routeLocationWillBeConfirmed: localeLabelSchema,
+  routeInternationalRoute: localeLabelSchema,
+  routeBorderDocumentNote: localeLabelSchema,
+  routeBorderSupport: localeLabelSchema,
+  routeViewLargeMap: localeLabelSchema,
+  routeOpenGoogleMaps: localeLabelSchema,
+  routeViewOnMap: localeLabelSchema,
+  routePickupPoint: localeLabelSchema,
+  routeDropoffPoint: localeLabelSchema,
+  routeArriveEarly: localeLabelSchema,
+  routeMinutesBefore: localeLabelSchema,
+  routeViewTripDetails: localeLabelSchema,
+  routeSeatsLeft: localeLabelSchema,
+  routePerPassenger: localeLabelSchema,
+  routeVerified: localeLabelSchema,
   comfortLabel: localeLabelSchema,
 });

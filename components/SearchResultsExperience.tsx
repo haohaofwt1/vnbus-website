@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
   CheckCircle2,
@@ -18,12 +18,13 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { FilterSidebar } from "@/components/FilterSidebar";
+import { RouteJourneyMap } from "@/components/RouteJourneyMap";
 import { TripCard, type TripCardTrip } from "@/components/TripCard";
+import { TripConfidenceCard } from "@/components/TripConfidenceCard";
 import { type Locale } from "@/lib/i18n";
 import type { SearchFilters } from "@/lib/data";
 import type { SearchUiLabels } from "@/lib/site-settings";
-import { clamp, getComfortScore, getPickupClarity, getTripPriorityScore, type SmartSearchMode } from "@/lib/travel-ui";
-import { formatDuration, formatTime } from "@/lib/utils";
+import { clamp, getComfortScore, getPickupClarity, getTripPriorityScore, getTripRecommendations, getTripTrustScore, type SmartSearchMode } from "@/lib/travel-ui";
 
 type SearchResultsExperienceProps = {
   trips: TripCardTrip[];
@@ -201,82 +202,202 @@ function tripInsight(trip: TripCardTrip, score: number, locale: Locale, uiLabels
   return `${prefix}: ${score}/100 · ${reasons.slice(0, 3).join(", ") || fallback}.`;
 }
 
-function RouteMapPanel({ trip, summary, locale, uiLabels }: { trip?: TripCardTrip; summary?: SearchResultsExperienceProps["summary"]; locale: Locale; uiLabels?: SearchUiLabels }) {
-  const copy = locale === "vi"
-    ? {
-        map: uiLabels?.routePanel.mapTitle?.[locale] ?? "Bản đồ hành trình",
-        routeInfo: uiLabels?.routePanel.routeInfoTitle?.[locale] ?? "Thông tin tuyến",
-        tips: uiLabels?.routePanel.tipsTitle?.[locale] ?? "Mẹo cho hành trình này",
-        noCoords: uiLabels?.routePanel.noCoordinates?.[locale] ?? "Chưa có tọa độ chính xác cho chuyến này.",
-        pickup: "Điểm đón chính",
-        dropoff: "Điểm trả chính",
-        distance: "Quãng đường",
-        duration: "Thời gian di chuyển",
-        road: "Đường đi phổ biến",
-        selected: "Nhà xe đang chọn",
-        tipBody: uiLabels?.routePanel.defaultTipBody?.[locale] ?? "Hướng dẫn tuyến đang được cập nhật trong admin. Vui lòng kiểm tra điểm đón/trả trước khi thanh toán.",
-      }
-    : {
-        map: uiLabels?.routePanel.mapTitle?.[locale] ?? "Journey map",
-        routeInfo: uiLabels?.routePanel.routeInfoTitle?.[locale] ?? "Route information",
-        tips: uiLabels?.routePanel.tipsTitle?.[locale] ?? "Tips for this journey",
-        noCoords: uiLabels?.routePanel.noCoordinates?.[locale] ?? "Precise coordinates are not available for this trip yet.",
-        pickup: "Main pickup",
-        dropoff: "Main drop-off",
-        distance: "Distance",
-        duration: "Travel time",
-        road: "Popular road",
-        selected: "Selected operator",
-        tipBody: uiLabels?.routePanel.defaultTipBody?.[locale] ?? "Trip guidance is being updated in admin. Confirm pickup and drop-off before payment.",
-      };
-  const from = trip?.route.fromCity.name ?? summary?.fromLabel ?? "";
-  const to = trip?.route.toCity.name ?? summary?.toLabel ?? "";
-  const routeTip = trip?.route.shortDescription?.trim() || copy.tipBody;
+function routeLabelForTrip(trip?: TripCardTrip) {
+  if (trip?.route.commonRoad?.trim()) return trip.route.commonRoad.trim();
+  const text = `${trip?.route.fromCity.name ?? ""} ${trip?.route.toCity.name ?? ""} ${trip?.route.shortDescription ?? ""}`.toLowerCase();
+  if (/savannakhet|laos|lào|dong ha|lao bao/.test(text)) return "QL1A";
+  return "QL1A";
+}
+
+function tripHasExactCoordinates(trip?: TripCardTrip) {
+  return Boolean(
+    trip?.pickupLatitude !== null &&
+      trip?.pickupLatitude !== undefined &&
+      trip?.pickupLongitude !== null &&
+      trip?.pickupLongitude !== undefined &&
+      trip?.dropoffLatitude !== null &&
+      trip?.dropoffLatitude !== undefined &&
+      trip?.dropoffLongitude !== null &&
+      trip?.dropoffLongitude !== undefined,
+  );
+}
+
+function RouteMapPanel({
+  trip,
+  summary,
+  locale,
+  uiLabels,
+  onOpenLargeMap,
+  onOpenTripDetails,
+}: {
+  trip?: TripCardTrip;
+  summary?: SearchResultsExperienceProps["summary"];
+  locale: Locale;
+  uiLabels?: SearchUiLabels;
+  onOpenLargeMap: () => void;
+  onOpenTripDetails: () => void;
+}) {
+  return (
+    <aside id="journey-map" className="order-first xl:order-none xl:sticky xl:top-[188px] xl:max-h-[calc(100vh-208px)] xl:overflow-y-auto xl:pr-1">
+      <RouteJourneyMap
+        originName={trip?.route.fromCity.name ?? summary?.fromLabel}
+        destinationName={trip?.route.toCity.name ?? summary?.toLabel}
+        pickupName={trip?.pickupPoint}
+        dropoffName={trip?.dropoffPoint}
+        distance={trip?.route.distanceKm}
+        duration={trip?.duration}
+        routeLabel={routeLabelForTrip(trip)}
+        selectedTrip={trip}
+        hasExactCoordinates={tripHasExactCoordinates(trip)}
+        isInternational={trip?.route.isInternational}
+        borderSupport={Boolean(trip?.route.borderCheckpointName || trip?.route.isInternational)}
+        locale={locale}
+        uiLabels={uiLabels}
+        compact
+        onOpenLargeMap={onOpenLargeMap}
+        onOpenTripDetails={onOpenTripDetails}
+      />
+    </aside>
+  );
+}
+
+function TripDetailDialog({
+  trip,
+  showRoute,
+  departureDate,
+  returnDate,
+  passengers,
+  locale,
+  uiLabels,
+  onClose,
+}: {
+  trip: TripCardTrip;
+  showRoute: boolean;
+  departureDate?: string;
+  returnDate?: string;
+  passengers: number;
+  locale: Locale;
+  uiLabels?: SearchUiLabels;
+  onClose: () => void;
+}) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const comfortScore = getComfortScore(trip.vehicleType.name, trip.amenities);
+  const pickupClarity = getPickupClarity(trip.pickupPoint);
+  const trustScore = getTripTrustScore({
+    operatorRating: trip.operator.rating,
+    vehicleTypeName: trip.vehicleType.name,
+    amenities: trip.amenities,
+    pickupPoint: trip.pickupPoint,
+    availableSeats: trip.availableSeats,
+    isInternational: trip.route.isInternational,
+  });
+  const recommendations = getTripRecommendations({
+    operatorRating: trip.operator.rating,
+    vehicleTypeName: trip.vehicleType.name,
+    amenities: trip.amenities,
+    pickupPoint: trip.pickupPoint,
+    duration: trip.duration,
+    price: trip.price,
+    currency: trip.currency,
+    isInternational: trip.route.isInternational,
+  });
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   return (
-    <aside id="journey-map" className="space-y-5 xl:sticky xl:top-[188px] xl:max-h-[calc(100vh-208px)] xl:overflow-y-auto xl:pr-1">
-      <section className="overflow-hidden rounded-[28px] border border-[#E5EAF2] bg-white shadow-[0_16px_42px_rgba(15,23,42,0.08)]">
-        <div className="p-5">
-          <h2 className="font-[family-name:var(--font-heading)] text-2xl font-black text-[#071A33]">{copy.map}</h2>
-          <p className="mt-2 text-sm font-bold text-[#334155]">{from} <span className="text-[#2563EB]">→</span> {to}</p>
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#071A33]/70 p-3 backdrop-blur-sm sm:p-6" role="presentation" onMouseDown={onClose}>
+      <div className="relative z-[121] flex max-h-[100dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_30px_80px_rgba(7,26,51,0.30)] sm:max-h-[92vh] sm:rounded-[32px]" role="dialog" aria-modal="true" aria-labelledby="journey-trip-detail-title" onMouseDown={(event) => event.stopPropagation()}>
+        <button ref={closeButtonRef} type="button" onClick={onClose} className="absolute right-4 top-4 z-30 inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200" aria-label={locale === "vi" ? "Đóng" : "Close"}>
+          <X className="h-5 w-5" />
+        </button>
+        <div className="overflow-y-auto">
+          <TripConfidenceCard
+            trip={trip}
+            trustScore={trustScore}
+            comfortScore={comfortScore}
+            pickupClarity={pickupClarity}
+            recommendations={recommendations}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            passengers={passengers}
+            showRoute={showRoute}
+            locale={locale}
+            uiLabels={uiLabels}
+          />
         </div>
-        <div className="relative mx-5 mb-5 h-[280px] overflow-hidden rounded-[24px] bg-[linear-gradient(135deg,#EFF8FF_0%,#F7FFF8_48%,#EAF3FF_100%)]">
-          <div className="absolute inset-0 opacity-50 [background-image:linear-gradient(90deg,rgba(37,99,235,0.12)_1px,transparent_1px),linear-gradient(rgba(37,99,235,0.12)_1px,transparent_1px)] [background-size:34px_34px]" />
-          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 420 280" aria-hidden="true">
-            <path d="M75 64 C142 72 147 126 203 139 C259 151 277 207 350 218" fill="none" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" />
-            <path d="M75 64 C142 72 147 126 203 139 C259 151 277 207 350 218" fill="none" stroke="#93C5FD" strokeWidth="13" strokeLinecap="round" opacity="0.28" />
-          </svg>
-          <div className="absolute left-[52px] top-[44px] rounded-full bg-white px-3 py-2 text-xs font-black text-[#071A33] shadow-md ring-1 ring-blue-100"><MapPin className="mr-1 inline h-4 w-4 text-emerald-600" />{from}</div>
-          <div className="absolute bottom-[38px] right-[38px] rounded-full bg-white px-3 py-2 text-xs font-black text-[#071A33] shadow-md ring-1 ring-blue-100"><MapPin className="mr-1 inline h-4 w-4 text-rose-600" />{to}</div>
-          <div className="absolute left-1/2 top-1/2 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-black text-white shadow-md">QL1A</div>
-        </div>
-        <p className="px-5 pb-5 text-xs font-semibold leading-5 text-[#64748B]">{copy.noCoords}</p>
-      </section>
+      </div>
+    </div>
+  );
+}
 
-      <section className="rounded-[24px] border border-[#E5EAF2] bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-        <h3 className="font-[family-name:var(--font-heading)] text-lg font-black text-[#071A33]">{copy.routeInfo}</h3>
-        <dl className="mt-4 space-y-3 text-sm">
-          {[
-            [copy.distance, trip?.route.distanceKm ? `${trip.route.distanceKm} km` : "—"],
-            [copy.duration, trip ? formatDuration(trip.duration) : "—"],
-            [copy.road, "QL1A"],
-            [copy.pickup, trip?.pickupPoint ?? "—"],
-            [copy.dropoff, trip?.dropoffPoint ?? "—"],
-            [copy.selected, trip ? `${trip.operator.name} · ${formatTime(trip.departureTime)} → ${formatTime(trip.arrivalTime)}` : "—"],
-          ].map(([label, value]) => (
-            <div key={label} className="flex items-start justify-between gap-4">
-              <dt className="font-bold text-[#64748B]">{label}</dt>
-              <dd className="text-right font-black text-[#071A33]">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+function MobileMapSheet({
+  trip,
+  summary,
+  locale,
+  uiLabels,
+  onClose,
+  onOpenTripDetails,
+}: {
+  trip?: TripCardTrip;
+  summary?: SearchResultsExperienceProps["summary"];
+  locale: Locale;
+  uiLabels?: SearchUiLabels;
+  onClose: () => void;
+  onOpenTripDetails: () => void;
+}) {
+  const sheetRef = useRef<HTMLDivElement>(null);
 
-      <section className="rounded-[24px] border border-[#E5EAF2] bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-        <h3 className="font-[family-name:var(--font-heading)] text-lg font-black text-[#071A33]">{copy.tips}</h3>
-        <p className="mt-3 text-sm font-semibold leading-6 text-[#64748B]">{routeTip}</p>
-      </section>
-    </aside>
+  useEffect(() => {
+    sheetRef.current?.focus();
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+      if (event.key !== "Tab" || !sheetRef.current) return;
+      const focusable = Array.from(sheetRef.current.querySelectorAll<HTMLElement>("button, a, input, select, textarea, [tabindex]:not([tabindex='-1'])")).filter((item) => !item.hasAttribute("disabled"));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[130] flex items-end bg-[#071A33]/65 backdrop-blur-sm md:items-center md:justify-center md:p-6" role="presentation" onMouseDown={onClose}>
+      <div ref={sheetRef} tabIndex={-1} className="max-h-[92dvh] w-full overflow-y-auto rounded-t-[30px] bg-white shadow-[0_30px_80px_rgba(7,26,51,0.34)] outline-none md:max-w-3xl md:rounded-[30px]" role="dialog" aria-modal="true" aria-labelledby="journey-map-sheet-title" onMouseDown={(event) => event.stopPropagation()}>
+        <RouteJourneyMap
+          originName={trip?.route.fromCity.name ?? summary?.fromLabel}
+          destinationName={trip?.route.toCity.name ?? summary?.toLabel}
+          pickupName={trip?.pickupPoint}
+          dropoffName={trip?.dropoffPoint}
+          distance={trip?.route.distanceKm}
+          duration={trip?.duration}
+          routeLabel={routeLabelForTrip(trip)}
+          selectedTrip={trip}
+          hasExactCoordinates={tripHasExactCoordinates(trip)}
+          isInternational={trip?.route.isInternational}
+          borderSupport={Boolean(trip?.route.borderCheckpointName || trip?.route.isInternational)}
+          locale={locale}
+          uiLabels={uiLabels}
+          inSheet
+          onClose={onClose}
+          onOpenTripDetails={onOpenTripDetails}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -300,6 +421,8 @@ export function SearchResultsExperience({
   const [visibleCount, setVisibleCount] = useState(20);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(trips[0]?.id ?? null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [largeMapOpen, setLargeMapOpen] = useState(false);
+  const [detailTrip, setDetailTrip] = useState<TripCardTrip | null>(null);
   const [aiText, setAiText] = useState("");
   const [aiMessage, setAiMessage] = useState("");
 
@@ -520,7 +643,14 @@ export function SearchResultsExperience({
         ) : null}
       </div>
 
-      <RouteMapPanel trip={selectedTrip} summary={summary} locale={locale} uiLabels={uiLabels} />
+      <RouteMapPanel
+        trip={selectedTrip}
+        summary={summary}
+        locale={locale}
+        uiLabels={uiLabels}
+        onOpenLargeMap={() => setLargeMapOpen(true)}
+        onOpenTripDetails={() => selectedTrip && setDetailTrip(selectedTrip)}
+      />
 
       {advancedOpen ? (
         <div className="fixed inset-0 z-[100] flex items-end bg-[#071A33]/60 p-0 backdrop-blur-sm lg:items-center lg:justify-end lg:p-6" role="presentation" onMouseDown={() => setAdvancedOpen(false)}>
@@ -534,6 +664,30 @@ export function SearchResultsExperience({
             <FilterSidebar filters={filters ?? {}} operators={filterData.operators} pickupOptions={filterData.pickupOptions} dropoffOptions={filterData.dropoffOptions} amenityOptions={filterData.amenityOptions} vehicleTypes={filterData.vehicleTypes} locale={locale} uiLabels={uiLabels} />
           </div>
         </div>
+      ) : null}
+
+      {largeMapOpen ? (
+        <MobileMapSheet
+          trip={selectedTrip}
+          summary={summary}
+          locale={locale}
+          uiLabels={uiLabels}
+          onClose={() => setLargeMapOpen(false)}
+          onOpenTripDetails={() => selectedTrip && setDetailTrip(selectedTrip)}
+        />
+      ) : null}
+
+      {detailTrip ? (
+        <TripDetailDialog
+          trip={detailTrip}
+          showRoute={showRoute}
+          departureDate={departureDate}
+          returnDate={returnDate}
+          passengers={passengers}
+          locale={locale}
+          uiLabels={uiLabels}
+          onClose={() => setDetailTrip(null)}
+        />
       ) : null}
     </div>
   );

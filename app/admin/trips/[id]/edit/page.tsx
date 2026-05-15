@@ -3,6 +3,13 @@ import { ActionMessage } from "@/components/admin/ActionMessage";
 import { TripForm } from "@/components/admin/TripForm";
 import { prisma } from "@/lib/prisma";
 
+type TripMapData = {
+  pickupLatitude: number | null;
+  pickupLongitude: number | null;
+  dropoffLatitude: number | null;
+  dropoffLongitude: number | null;
+};
+
 export default async function EditTripPage({
   params,
   searchParams,
@@ -12,8 +19,18 @@ export default async function EditTripPage({
 }) {
   const { id } = await params;
   const pageParams = await searchParams;
-  const [trip, routes, operators, vehicleTypes] = await Promise.all([
+  const [trip, tripMapRows, routes, operators, vehicleTypes] = await Promise.all([
     prisma.trip.findUnique({ where: { id } }),
+    prisma.$queryRaw<TripMapData[]>`
+      SELECT
+        "pickupLatitude",
+        "pickupLongitude",
+        "dropoffLatitude",
+        "dropoffLongitude"
+      FROM "Trip"
+      WHERE "id" = ${id}
+      LIMIT 1
+    `,
     prisma.route.findMany({
       include: {
         fromCity: true,
@@ -29,6 +46,11 @@ export default async function EditTripPage({
     notFound();
   }
 
+  const tripWithMapData = {
+    ...trip,
+    ...(tripMapRows[0] ?? {}),
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -39,7 +61,7 @@ export default async function EditTripPage({
       </div>
       {pageParams.saved ? <ActionMessage type="success" message="Chuyến xe đã được lưu." /> : null}
       {pageParams.error ? <ActionMessage type="error" message={pageParams.error} /> : null}
-      <TripForm trip={trip} routes={routes} operators={operators} vehicleTypes={vehicleTypes} />
+      <TripForm trip={tripWithMapData} routes={routes} operators={operators} vehicleTypes={vehicleTypes} />
     </div>
   );
 }

@@ -149,3 +149,47 @@ textarea {
 .hero-select {
   padding-right: 0.75rem;
 }
+
+.journey-map-scene {
+  perspective: 900px;
+}
+
+.journey-map-plane {
+  transform: rotateX(9deg) rotateZ(-1.5deg);
+  transform-origin: center;
+}
+
+.journey-route-pulse {
+  animation: journey-route-glow 3.8s ease-in-out infinite;
+}
+
+.journey-bus-marker {
+  animation: journey-bus-drive 6.4s ease-in-out infinite;
+}
+
+@keyframes journey-route-glow {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes journey-bus-drive {
+  0%,
+  100% {
+    transform: translate3d(-34px, -18px, 0) rotate(13deg);
+  }
+  50% {
+    transform: translate3d(30px, 20px, 0) rotate(13deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-route-pulse,
+  .journey-bus-marker {
+    animation: none;
+  }
+}

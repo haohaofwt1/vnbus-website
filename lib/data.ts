@@ -19,6 +19,24 @@ import { toArray } from "@/lib/utils";
 
 const publicTripStatuses = [TripStatus.ACTIVE, TripStatus.SOLD_OUT];
 
+type TripJourneyMapRow = {
+  id: string;
+  pickupLatitude: number | null;
+  pickupLongitude: number | null;
+  dropoffLatitude: number | null;
+  dropoffLongitude: number | null;
+  routeId: string;
+  commonRoad: string;
+  routePolyline: string;
+  borderCheckpointName: string;
+  borderCheckpointLatitude: number | null;
+  borderCheckpointLongitude: number | null;
+  travelAdvisory: string;
+  landmarkMarkers: unknown;
+  trafficStatus: string;
+  trafficDelayMinutes: number;
+};
+
 export type SearchFilters = {
   lang?: string;
   smart?: string;
@@ -569,9 +587,57 @@ export async function searchTrips(filters: SearchFilters) {
   const filteredTrips = trips.filter((trip) =>
     matchesDepartureWindow(trip.departureTime, departureWindows),
   );
+  const mapRows = filteredTrips.length
+    ? await prisma.$queryRaw<TripJourneyMapRow[]>`
+        SELECT
+          "Trip"."id",
+          "Trip"."pickupLatitude",
+          "Trip"."pickupLongitude",
+          "Trip"."dropoffLatitude",
+          "Trip"."dropoffLongitude",
+          "Route"."id" AS "routeId",
+          "Route"."commonRoad",
+          "Route"."routePolyline",
+          "Route"."borderCheckpointName",
+          "Route"."borderCheckpointLatitude",
+          "Route"."borderCheckpointLongitude",
+          "Route"."travelAdvisory",
+          "Route"."landmarkMarkers",
+          "Route"."trafficStatus",
+          "Route"."trafficDelayMinutes"
+        FROM "Trip"
+        JOIN "Route" ON "Route"."id" = "Trip"."routeId"
+        WHERE "Trip"."id" IN (${Prisma.join(filteredTrips.map((trip) => trip.id))})
+      `
+    : [];
+  const mapDataByTripId = new Map(mapRows.map((row) => [row.id, row]));
+  const enrichedTrips = filteredTrips.map((trip) => {
+    const mapData = mapDataByTripId.get(trip.id);
+    if (!mapData) return trip;
+
+    return {
+      ...trip,
+      pickupLatitude: mapData.pickupLatitude,
+      pickupLongitude: mapData.pickupLongitude,
+      dropoffLatitude: mapData.dropoffLatitude,
+      dropoffLongitude: mapData.dropoffLongitude,
+      route: {
+        ...trip.route,
+        commonRoad: mapData.commonRoad,
+        routePolyline: mapData.routePolyline,
+        borderCheckpointName: mapData.borderCheckpointName,
+        borderCheckpointLatitude: mapData.borderCheckpointLatitude,
+        borderCheckpointLongitude: mapData.borderCheckpointLongitude,
+        travelAdvisory: mapData.travelAdvisory,
+        landmarkMarkers: mapData.landmarkMarkers,
+        trafficStatus: mapData.trafficStatus,
+        trafficDelayMinutes: mapData.trafficDelayMinutes,
+      },
+    };
+  });
 
   return {
-    trips: attachPromotionOffers(filteredTrips, promotions, passengerCount),
+    trips: attachPromotionOffers(enrichedTrips, promotions, passengerCount),
     operators: allActiveOperators,
     pickupOptions: Array.from(new Set(trips.map((trip) => trip.pickupPoint))).sort(),
     dropoffOptions: Array.from(new Set(trips.map((trip) => trip.dropoffPoint))).sort(),

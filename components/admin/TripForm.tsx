@@ -21,6 +21,10 @@ type TripFormProps = {
     currency: string;
     pickupPoint: string;
     dropoffPoint: string;
+    pickupLatitude?: number | null;
+    pickupLongitude?: number | null;
+    dropoffLatitude?: number | null;
+    dropoffLongitude?: number | null;
     availableSeats: number;
     amenities: string[];
     status: string;
@@ -186,6 +190,31 @@ export function TripForm({
         />
       </label>
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-slate-700">Pickup latitude</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            name="pickupLatitude"
+            defaultValue={trip?.pickupLatitude ?? ""}
+            className={inputClass}
+            placeholder="Ví dụ: 16.4637"
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-slate-700">Pickup longitude</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            name="pickupLongitude"
+            defaultValue={trip?.pickupLongitude ?? ""}
+            className={inputClass}
+            placeholder="Ví dụ: 107.5909"
+          />
+        </label>
+      </div>
+
       <label className="block space-y-2">
         <span className="text-sm font-medium text-slate-700">Điểm trả</span>
         <input
@@ -197,6 +226,31 @@ export function TripForm({
           required
         />
       </label>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-slate-700">Drop-off latitude</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            name="dropoffLatitude"
+            defaultValue={trip?.dropoffLatitude ?? ""}
+            className={inputClass}
+            placeholder="Ví dụ: 16.5722"
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-slate-700">Drop-off longitude</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            name="dropoffLongitude"
+            defaultValue={trip?.dropoffLongitude ?? ""}
+            className={inputClass}
+            placeholder="Ví dụ: 104.7706"
+          />
+        </label>
+      </div>
 
       <label className="block space-y-2">
         <span className="text-sm font-medium text-slate-700">

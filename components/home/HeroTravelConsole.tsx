@@ -230,6 +230,7 @@ function dateToInput(date: Date) {
 }
 
 function resolveLocationSlug(value: string, locations: HomeLocationOption[]) {
+  if (!value.trim()) return "";
   const normalized = normalizeText(value);
   const alias = cityAliases[normalized] || cityAliases[value.toLowerCase()];
   if (alias) return alias;
@@ -578,7 +579,7 @@ export function HeroTravelConsole({
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [departureDate, setDepartureDate] = useState("");
-  const [passengers, setPassengers] = useState("2");
+  const [passengers, setPassengers] = useState("");
   const [vehicleType, setVehicleType] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
   const [voiceMessage, setVoiceMessage] = useState("");

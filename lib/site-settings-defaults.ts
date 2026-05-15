@@ -67,10 +67,31 @@ export type SearchUiLabels = {
   };
   routePanel: {
     mapTitle: LocaleMap;
+    routeOverview: LocaleMap;
+    selectedTrip: LocaleMap;
+    distance: LocaleMap;
+    duration: LocaleMap;
+    averageDuration: LocaleMap;
+    commonRoad: LocaleMap;
     routeInfoTitle: LocaleMap;
     tipsTitle: LocaleMap;
     defaultTipBody: LocaleMap;
     noCoordinates: LocaleMap;
+    locationWillBeConfirmed: LocaleMap;
+    internationalRoute: LocaleMap;
+    borderDocumentNote: LocaleMap;
+    borderSupport: LocaleMap;
+    viewLargeMap: LocaleMap;
+    openGoogleMaps: LocaleMap;
+    viewOnMap: LocaleMap;
+    pickupPoint: LocaleMap;
+    dropoffPoint: LocaleMap;
+    arriveEarly: LocaleMap;
+    minutesBefore: LocaleMap;
+    viewTripDetails: LocaleMap;
+    seatsLeft: LocaleMap;
+    perPassenger: LocaleMap;
+    verified: LocaleMap;
   };
   tripDetail: {
     estimatedTotal: LocaleMap;
@@ -368,6 +389,42 @@ export const defaultSearchUiLabels: SearchUiLabels = {
       ko: "여정 지도",
       ja: "旅程マップ",
     },
+    routeOverview: {
+      en: "Route overview",
+      vi: "Tổng quan tuyến",
+      ko: "노선 개요",
+      ja: "ルート概要",
+    },
+    selectedTrip: {
+      en: "Selected trip",
+      vi: "Chuyến đang chọn",
+      ko: "선택한 운행",
+      ja: "選択中の便",
+    },
+    distance: {
+      en: "Distance",
+      vi: "Quãng đường",
+      ko: "거리",
+      ja: "距離",
+    },
+    duration: {
+      en: "Duration",
+      vi: "Thời gian di chuyển",
+      ko: "소요 시간",
+      ja: "所要時間",
+    },
+    averageDuration: {
+      en: "Average duration",
+      vi: "Thời gian TB",
+      ko: "평균 소요 시간",
+      ja: "平均所要時間",
+    },
+    commonRoad: {
+      en: "Common road",
+      vi: "Đường phổ biến",
+      ko: "주요 도로",
+      ja: "一般的な道路",
+    },
     routeInfoTitle: {
       en: "Route information",
       vi: "Thông tin tuyến",
@@ -387,10 +444,100 @@ export const defaultSearchUiLabels: SearchUiLabels = {
       ja: "管理画面で旅程案内を更新中です。支払い前に乗降場所を確認してください。",
     },
     noCoordinates: {
-      en: "Precise coordinates are not available for this trip yet.",
+      en: "Exact coordinates are not available for this trip.",
       vi: "Chưa có tọa độ chính xác cho chuyến này.",
       ko: "이 운행의 정확한 좌표가 아직 없습니다.",
       ja: "この便の正確な座標はまだありません。",
+    },
+    locationWillBeConfirmed: {
+      en: "Pickup/drop-off will be confirmed before departure.",
+      vi: "Điểm đón/trả sẽ được xác nhận lại trước chuyến đi.",
+      ko: "탑승/하차 위치는 출발 전에 확인됩니다.",
+      ja: "乗降場所は出発前に確認されます。",
+    },
+    internationalRoute: {
+      en: "International route",
+      vi: "Tuyến quốc tế",
+      ko: "국제 노선",
+      ja: "国際路線",
+    },
+    borderDocumentNote: {
+      en: "This is an international route. Passengers should check border/immigration documents before departure.",
+      vi: "Đây là tuyến quốc tế. Hành khách nên kiểm tra giấy tờ xuất nhập cảnh trước chuyến đi.",
+      ko: "이 노선은 국제 노선입니다. 승객은 출발 전 출입국 서류를 확인해야 합니다.",
+      ja: "これは国際路線です。乗客は出発前に出入国書類を確認してください。",
+    },
+    borderSupport: {
+      en: "Border support",
+      vi: "Hỗ trợ biên giới",
+      ko: "국경 지원",
+      ja: "国境サポート",
+    },
+    viewLargeMap: {
+      en: "View large map",
+      vi: "Xem bản đồ lớn",
+      ko: "큰 지도 보기",
+      ja: "大きな地図を見る",
+    },
+    openGoogleMaps: {
+      en: "Open Google Maps",
+      vi: "Mở Google Maps",
+      ko: "Google 지도 열기",
+      ja: "Google マップを開く",
+    },
+    viewOnMap: {
+      en: "View on map",
+      vi: "Xem trên bản đồ",
+      ko: "지도에서 보기",
+      ja: "地図で見る",
+    },
+    pickupPoint: {
+      en: "Main pickup point",
+      vi: "Điểm đón chính",
+      ko: "주요 탑승 지점",
+      ja: "主な乗車場所",
+    },
+    dropoffPoint: {
+      en: "Main drop-off point",
+      vi: "Điểm trả chính",
+      ko: "주요 하차 지점",
+      ja: "主な降車場所",
+    },
+    arriveEarly: {
+      en: "Arrive early",
+      vi: "Nên có mặt trước",
+      ko: "일찍 도착",
+      ja: "早めに到着",
+    },
+    minutesBefore: {
+      en: "20-30 minutes",
+      vi: "20-30 phút",
+      ko: "20-30분",
+      ja: "20-30分",
+    },
+    viewTripDetails: {
+      en: "View trip details",
+      vi: "Xem chi tiết chuyến",
+      ko: "운행 상세 보기",
+      ja: "便の詳細を見る",
+    },
+    seatsLeft: {
+      en: "{count} seats left",
+      vi: "{count} chỗ còn lại",
+      ko: "{count}석 남음",
+      ja: "残り{count}席",
+    },
+    perPassenger: {
+      en: "/ passenger",
+      vi: "/ khách",
+      ko: "/ 승객",
+      ja: "/ 名",
+    },
+    verified: {
+      en: "Verified",
+      vi: "Đã xác minh",
+      ko: "인증됨",
+      ja: "認証済み",
     },
   },
   tripDetail: {

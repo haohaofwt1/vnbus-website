@@ -118,10 +118,31 @@ export function SearchUiLabelsForm({
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-ink">Route intelligence panel</h3>
         <LocaleFields prefix="routeMapTitle" label="Map title" values={labels.routePanel.mapTitle} />
+        <LocaleFields prefix="routeOverview" label="Route overview" values={labels.routePanel.routeOverview} />
+        <LocaleFields prefix="routeSelectedTrip" label="Selected trip" values={labels.routePanel.selectedTrip} />
+        <LocaleFields prefix="routeDistance" label="Distance" values={labels.routePanel.distance} />
+        <LocaleFields prefix="routeDuration" label="Duration" values={labels.routePanel.duration} />
+        <LocaleFields prefix="routeAverageDuration" label="Average duration" values={labels.routePanel.averageDuration} />
+        <LocaleFields prefix="routeCommonRoad" label="Common road" values={labels.routePanel.commonRoad} />
         <LocaleFields prefix="routeInfoTitle" label="Route info title" values={labels.routePanel.routeInfoTitle} />
         <LocaleFields prefix="routeTipsTitle" label="Tips title" values={labels.routePanel.tipsTitle} />
         <LocaleFields prefix="routeDefaultTipBody" label="Default tip body" values={labels.routePanel.defaultTipBody} />
         <LocaleFields prefix="routeNoCoordinates" label="No coordinates message" values={labels.routePanel.noCoordinates} />
+        <LocaleFields prefix="routeLocationWillBeConfirmed" label="Location confirmation note" values={labels.routePanel.locationWillBeConfirmed} />
+        <LocaleFields prefix="routeInternationalRoute" label="International route badge" values={labels.routePanel.internationalRoute} />
+        <LocaleFields prefix="routeBorderDocumentNote" label="Border document note" values={labels.routePanel.borderDocumentNote} />
+        <LocaleFields prefix="routeBorderSupport" label="Border support badge" values={labels.routePanel.borderSupport} />
+        <LocaleFields prefix="routeViewLargeMap" label="View large map" values={labels.routePanel.viewLargeMap} />
+        <LocaleFields prefix="routeOpenGoogleMaps" label="Open Google Maps" values={labels.routePanel.openGoogleMaps} />
+        <LocaleFields prefix="routeViewOnMap" label="View on map" values={labels.routePanel.viewOnMap} />
+        <LocaleFields prefix="routePickupPoint" label="Main pickup point" values={labels.routePanel.pickupPoint} />
+        <LocaleFields prefix="routeDropoffPoint" label="Main drop-off point" values={labels.routePanel.dropoffPoint} />
+        <LocaleFields prefix="routeArriveEarly" label="Arrive early" values={labels.routePanel.arriveEarly} />
+        <LocaleFields prefix="routeMinutesBefore" label="Minutes before" values={labels.routePanel.minutesBefore} />
+        <LocaleFields prefix="routeViewTripDetails" label="View trip details" values={labels.routePanel.viewTripDetails} />
+        <LocaleFields prefix="routeSeatsLeft" label="Seats left template" values={labels.routePanel.seatsLeft} />
+        <LocaleFields prefix="routePerPassenger" label="Per passenger" values={labels.routePanel.perPassenger} />
+        <LocaleFields prefix="routeVerified" label="Verified" values={labels.routePanel.verified} />
       </div>
 
       <button
