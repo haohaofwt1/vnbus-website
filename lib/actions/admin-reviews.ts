@@ -48,8 +48,25 @@ async function syncBookingReviewState(bookingRequestId?: string | null, hasRevie
 
 export async function createReviewAction(formData: FormData) {
   const session = await requireAdminUser();
-  const parsed = adminReviewSchema.parse(parseFormData(formData));
-  const review = await prisma.review.create({ data: parsed });
+  const parsed = adminReviewSchema.safeParse(parseFormData(formData));
+  if (!parsed.success) {
+    redirect("/admin/reviews?error=invalid-review");
+  }
+  if (parsed.data.bookingRequestId) {
+    const existingReview = await prisma.review.findUnique({
+      where: { bookingRequestId: parsed.data.bookingRequestId },
+      select: { id: true },
+    });
+    if (existingReview) {
+      redirect("/admin/reviews?error=duplicate-booking-review");
+    }
+  }
+  const review = await prisma.review.create({
+    data: {
+      ...parsed.data,
+      operatorRepliedAt: parsed.data.operatorReply ? new Date() : undefined,
+    },
+  });
 
   await createAuditLog({
     userId: session.id,
@@ -72,11 +89,26 @@ export async function createReviewAction(formData: FormData) {
 export async function updateReviewAction(formData: FormData) {
   const session = await requireAdminUser();
   const id = getRequiredId(formData);
-  const parsed = adminReviewSchema.parse(parseFormData(formData));
+  const parsed = adminReviewSchema.safeParse(parseFormData(formData));
+  if (!parsed.success) {
+    redirect(`/admin/reviews?edit=${id}&error=invalid-review`);
+  }
+  if (parsed.data.bookingRequestId) {
+    const existingReview = await prisma.review.findUnique({
+      where: { bookingRequestId: parsed.data.bookingRequestId },
+      select: { id: true },
+    });
+    if (existingReview && existingReview.id !== id) {
+      redirect(`/admin/reviews?edit=${id}&error=duplicate-booking-review`);
+    }
+  }
 
   const review = await prisma.review.update({
     where: { id },
-    data: parsed,
+    data: {
+      ...parsed.data,
+      operatorRepliedAt: parsed.data.operatorReply ? new Date() : undefined,
+    },
   });
 
   await createAuditLog({

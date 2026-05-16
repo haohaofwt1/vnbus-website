@@ -9,6 +9,7 @@ type SearchSummaryBarProps = {
   summary: {
     fromLabel: string;
     toLabel: string;
+    titleLabel?: string;
     departureDate?: string;
     passengers?: string;
     vehicleTypeLabel?: string;
@@ -61,7 +62,6 @@ export function SearchSummaryBar({
       edit: "Edit search",
       askAi: "Ask AI",
       change: "Change",
-      map: "Map",
       trips: "matching trips",
       distance: "Distance",
       avgDuration: "Avg. travel time",
@@ -75,13 +75,13 @@ export function SearchSummaryBar({
       chooseTo: "Choose destination",
       apply: "View trips",
       close: "Close",
+      aiPrompt: "Ask AI to prioritize cheap, comfortable, WC onboard, easy pickup...",
     },
     vi: {
       journey: "Hành trình của bạn",
       edit: "Sửa tìm kiếm",
       askAi: "Hỏi AI",
       change: "Đổi",
-      map: "Bản đồ",
       trips: "chuyến phù hợp",
       distance: "Quãng đường",
       avgDuration: "Thời gian TB",
@@ -95,13 +95,13 @@ export function SearchSummaryBar({
       chooseTo: "Chọn điểm đến",
       apply: "Xem chuyến",
       close: "Đóng",
+      aiPrompt: "Hỏi AI để ưu tiên chuyến rẻ, thoải mái, có WC, dễ đón...",
     },
     ko: {
       journey: "여정",
       edit: "검색 수정",
       askAi: "AI에게 묻기",
       change: "변경",
-      map: "지도",
       trips: "개 운행",
       distance: "거리",
       avgDuration: "평균 시간",
@@ -115,13 +115,13 @@ export function SearchSummaryBar({
       chooseTo: "도착지 선택",
       apply: "운행 보기",
       close: "닫기",
+      aiPrompt: "AI에게 저렴함, 편안함, 화장실, 쉬운 픽업을 우선해 달라고 요청하세요...",
     },
     ja: {
       journey: "旅程",
       edit: "検索を変更",
       askAi: "AIに聞く",
       change: "変更",
-      map: "地図",
       trips: "件の便",
       distance: "距離",
       avgDuration: "平均時間",
@@ -135,6 +135,7 @@ export function SearchSummaryBar({
       chooseTo: "目的地を選択",
       apply: "便を見る",
       close: "閉じる",
+      aiPrompt: "安さ、快適さ、トイレ、乗車しやすさをAIに優先させる...",
     },
   }[locale];
 
@@ -148,8 +149,16 @@ export function SearchSummaryBar({
   }, [open]);
 
   const departureDate = defaults?.departureDate ?? new Date().toISOString().slice(0, 10);
-  const passengers = summary.passengers ?? String(defaults?.passengers ?? 1);
+  const passengers = summary.passengers ?? (defaults?.passengers ? String(defaults.passengers) : "");
   const vehicle = summary.vehicleTypeLabel ?? copy.anyVehicle;
+  const hasRouteEndpoints = Boolean(defaults?.from || defaults?.to);
+  function focusAiPreferences() {
+    document.getElementById("ai-preferences")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      const input = document.getElementById("ai-preference-input") as HTMLInputElement | null;
+      input?.focus();
+    }, 250);
+  }
 
   return (
     <>
@@ -157,15 +166,21 @@ export function SearchSummaryBar({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#64748B]">{copy.journey}</p>
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 font-[family-name:var(--font-heading)] text-2xl font-black tracking-tight text-[#071A33] sm:text-3xl">
-              <span className="truncate">{summary.fromLabel}</span>
-              <ArrowRight className="h-5 w-5 shrink-0 text-[#2563EB]" />
-              <span className="truncate">{summary.toLabel}</span>
-            </div>
+            {summary.titleLabel && !hasRouteEndpoints ? (
+              <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-black tracking-tight text-[#071A33] sm:text-3xl">
+                {summary.titleLabel}
+              </h1>
+            ) : (
+              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 font-[family-name:var(--font-heading)] text-2xl font-black tracking-tight text-[#071A33] sm:text-3xl">
+                <span className="truncate">{summary.fromLabel}</span>
+                <ArrowRight className="h-5 w-5 shrink-0 text-[#2563EB]" />
+                <span className="truncate">{summary.toLabel}</span>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-bold text-[#334155]">
               <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-[#2563EB]" />{formatDateLabel(summary.departureDate, locale)}</span>
-              <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-[#2563EB]" />{passengers}</span>
-              <span>{vehicle}</span>
+              {passengers ? <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-[#2563EB]" />{passengers}</span> : null}
+              {vehicle ? <span>{vehicle}</span> : null}
               {typeof summary.tripCount === "number" ? <span>{summary.tripCount.toLocaleString(locale === "vi" ? "vi-VN" : "en-US")} {copy.trips}</span> : null}
               {summary.distanceKm ? <span>{copy.distance}: {summary.distanceKm} km</span> : null}
               {summary.averageDuration ? <span>{copy.avgDuration}: {summary.averageDuration}</span> : null}
@@ -178,15 +193,16 @@ export function SearchSummaryBar({
               <span className="hidden sm:inline">{copy.edit}</span>
               <span className="sm:hidden">{copy.change}</span>
             </button>
-            <a href="#journey-map" className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-[#DCE6F2] bg-white px-4 py-3 text-sm font-black text-[#071A33] transition hover:bg-[#F8FBFF]">
-              <MapPinned className="h-4 w-4 text-[#2563EB]" />
-              <span className="sm:hidden">{copy.map}</span>
-              <span className="hidden sm:inline">{copy.map}</span>
-            </a>
-            <a href="#ai-preferences" className="col-span-2 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#2563EB] px-4 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] transition hover:bg-[#1D4ED8] sm:col-span-1">
+            <button
+              type="button"
+              onClick={focusAiPreferences}
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#2563EB] px-4 py-3 text-sm font-black text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] transition hover:bg-[#1D4ED8]"
+              aria-label={copy.aiPrompt}
+              title={copy.aiPrompt}
+            >
               <Bot className="h-4 w-4" />
               {copy.askAi}
-            </a>
+            </button>
           </div>
         </div>
       </section>

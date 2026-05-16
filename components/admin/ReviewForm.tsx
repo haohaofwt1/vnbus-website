@@ -15,7 +15,14 @@ type ReviewFormProps = {
     operatorId: string | null;
     customerName: string;
     rating: number;
+    punctualityRating?: number | null;
+    vehicleQualityRating?: number | null;
+    cleanlinessRating?: number | null;
+    serviceRating?: number | null;
+    pickupDropoffRating?: number | null;
+    supportRating?: number | null;
     comment: string;
+    operatorReply?: string | null;
     status: string;
   };
   routes: Array<{
@@ -66,7 +73,11 @@ export function ReviewForm({ review, routes, operators, bookingRequests }: Revie
             >
               <option value="">Not linked to a booking</option>
               {bookingRequests.map((booking) => (
-                <option key={booking.id} value={booking.id}>
+                <option
+                  key={booking.id}
+                  value={booking.id}
+                  disabled={Boolean(booking.review && booking.review.id !== review?.id)}
+                >
                   {booking.customerName} · {booking.fromCity} to {booking.toCity} · {booking.status}
                   {booking.review && booking.review.id !== review?.id ? " · already linked" : ""}
                 </option>
@@ -131,7 +142,43 @@ export function ReviewForm({ review, routes, operators, bookingRequests }: Revie
             rows={5}
             defaultValue={review?.comment}
             className={inputClass}
+            minLength={12}
             required
+          />
+          <span className="text-xs font-semibold text-slate-500">Minimum 12 characters. Public pages only show published reviews linked to completed bookings.</span>
+        </label>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[
+            ["punctualityRating", "On-time rating", review?.punctualityRating],
+            ["vehicleQualityRating", "Vehicle quality", review?.vehicleQualityRating],
+            ["cleanlinessRating", "Cleanliness", review?.cleanlinessRating],
+            ["serviceRating", "Service attitude", review?.serviceRating],
+            ["pickupDropoffRating", "Pickup/drop-off", review?.pickupDropoffRating],
+            ["supportRating", "Customer support", review?.supportRating],
+          ].map(([name, label, value]) => (
+            <label key={name as string} className="space-y-2">
+              <span className="text-sm font-medium text-slate-700">{label as string}</span>
+              <select name={name as string} defaultValue={value?.toString() ?? ""} className={inputClass}>
+                <option value="">Not rated</option>
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <option key={rating} value={rating}>
+                    {rating} / 5
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-slate-700">Operator reply</span>
+          <textarea
+            name="operatorReply"
+            rows={3}
+            defaultValue={review?.operatorReply ?? ""}
+            className={inputClass}
+            placeholder="Optional public response from the operator"
           />
         </label>
 

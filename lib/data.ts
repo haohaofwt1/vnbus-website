@@ -664,7 +664,22 @@ export async function getRouteBySlug(slug: string) {
         orderBy: { departureTime: "asc" },
       },
       reviews: {
-        where: { status: ReviewStatus.PUBLISHED },
+        where: {
+          status: ReviewStatus.PUBLISHED,
+          bookingRequest: { is: { status: BookingStatus.COMPLETED } },
+        },
+        include: {
+          bookingRequest: {
+            include: {
+              trip: {
+                include: {
+                  route: { include: { fromCity: true, toCity: true } },
+                  vehicleType: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
       },
       faqs: {
@@ -749,7 +764,22 @@ export async function getOperatorBySlug(slug: string) {
         orderBy: { departureTime: "asc" },
       },
       reviews: {
-        where: { status: ReviewStatus.PUBLISHED },
+        where: {
+          status: ReviewStatus.PUBLISHED,
+          bookingRequest: { is: { status: BookingStatus.COMPLETED } },
+        },
+        include: {
+          bookingRequest: {
+            include: {
+              trip: {
+                include: {
+                  route: { include: { fromCity: true, toCity: true } },
+                  vehicleType: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
       },
       faqs: {
@@ -764,6 +794,18 @@ export async function getOperatorBySlug(slug: string) {
   }
 
   const promotedTrips = attachPromotionOffers(operator.trips, await getPublicPromotions());
+  const tripIds = promotedTrips.map((trip) => trip.id);
+  const [bookingCount, confirmedBookingCount] = tripIds.length
+    ? await Promise.all([
+        prisma.bookingRequest.count({ where: { tripId: { in: tripIds } } }),
+        prisma.bookingRequest.count({
+          where: {
+            tripId: { in: tripIds },
+            status: { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+          },
+        }),
+      ])
+    : [0, 0];
 
   const popularRoutes = promotedTrips.reduce<
     Array<{
@@ -807,6 +849,15 @@ export async function getOperatorBySlug(slug: string) {
     },
     popularRoutes,
     vehicleTypes,
+    metrics: {
+      reviewCount: operator.reviews.length,
+      averageRating: operator.reviews.length
+        ? Number((operator.reviews.reduce((sum, review) => sum + review.rating, 0) / operator.reviews.length).toFixed(1))
+        : null,
+      openTripsCount: promotedTrips.length,
+      confirmationRate: bookingCount ? Math.round((confirmedBookingCount / bookingCount) * 100) : null,
+      responseMinutes: null,
+    },
   };
 }
 

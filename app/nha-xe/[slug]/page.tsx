@@ -18,20 +18,20 @@ export async function generateMetadata({
 
   if (!data) {
     return buildMetadata({
-      title: "Operator not found",
-      description: "The requested operator could not be found.",
-      path: "/operators",
+      title: "Không tìm thấy nhà xe",
+      description: "Không tìm thấy hồ sơ nhà xe được yêu cầu.",
+      path: "/nha-xe",
     });
   }
 
   return buildMetadata({
     title: `${data.operator.name} | Hồ sơ nhà xe VNBUS`,
     description: data.operator.description,
-    path: `/operators/${data.operator.slug}`,
+    path: `/nha-xe/${data.operator.slug}`,
   });
 }
 
-export default async function OperatorPage({
+export default async function VietnameseOperatorPage({
   params,
   searchParams,
 }: {
@@ -40,7 +40,7 @@ export default async function OperatorPage({
 }) {
   const { slug } = await params;
   const search = await searchParams;
-  const locale = resolveLocale(search.lang);
+  const locale = resolveLocale(search.lang ?? "vi");
   const data = await getOperatorBySlug(slug);
 
   if (!data) {
@@ -48,9 +48,9 @@ export default async function OperatorPage({
   }
 
   const breadcrumbSchema = buildBreadcrumbSchema([
-    { name: locale === "vi" ? "Trang chủ" : "Home", path: "/" },
-    { name: locale === "vi" ? "Nhà xe" : "Operators", path: "/operators" },
-    { name: data.operator.name, path: `/operators/${data.operator.slug}` },
+    { name: "Trang chủ", path: "/" },
+    { name: "Nhà xe", path: "/operators" },
+    { name: data.operator.name, path: `/nha-xe/${data.operator.slug}` },
   ]);
 
   return (

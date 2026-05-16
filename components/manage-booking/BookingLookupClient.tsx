@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { FormEvent, useMemo, useSyncExternalStore, useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -8,6 +10,7 @@ import {
   Clock3,
   CreditCard,
   Download,
+  Heart,
   Mail,
   MapPin,
   Phone,
@@ -18,7 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
-import { getRouteLabel } from "@/lib/i18n";
+import { getRouteLabel, withLang } from "@/lib/i18n";
 import { getBookingLookupUiCopy, getBookingStatusCopy } from "@/lib/public-locale-copy";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 
@@ -59,9 +62,113 @@ type LookupBooking = {
 };
 
 type LookupResponse = { booking?: LookupBooking; error?: string };
+type SavedOperator = {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string;
+  savedAt: string;
+};
+
+const savedOperatorsStorageKey = "vnbus.savedOperators";
+const savedOperatorsChangedEvent = "vnbus:saved-operators-changed";
 
 function cleanReference(value: string) {
   return value.trim().replace(/\s+/g, "");
+}
+
+function readSavedOperators() {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(savedOperatorsStorageKey) ?? "[]");
+    return Array.isArray(parsed) ? (parsed as SavedOperator[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readSavedOperatorsSnapshot() {
+  if (typeof window === "undefined") return "[]";
+  return window.localStorage.getItem(savedOperatorsStorageKey) ?? "[]";
+}
+
+function subscribeSavedOperators(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(savedOperatorsChangedEvent, onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(savedOperatorsChangedEvent, onStoreChange);
+  };
+}
+
+function removeSavedOperator(id: string) {
+  const next = readSavedOperators().filter((operator) => operator.id !== id);
+  window.localStorage.setItem(savedOperatorsStorageKey, JSON.stringify(next));
+  window.dispatchEvent(new Event(savedOperatorsChangedEvent));
+}
+
+function SavedOperatorsPanel({ locale }: { locale: Locale }) {
+  const savedOperatorsSnapshot = useSyncExternalStore(subscribeSavedOperators, readSavedOperatorsSnapshot, () => "[]");
+  const savedOperators = useMemo(() => {
+    try {
+      const parsed = JSON.parse(savedOperatorsSnapshot);
+      return Array.isArray(parsed) ? (parsed as SavedOperator[]) : [];
+    } catch {
+      return [];
+    }
+  }, [savedOperatorsSnapshot]);
+  const copy = locale === "vi"
+    ? {
+        title: "Nhà xe đã lưu",
+        body: "Các nhà xe bạn đã đánh dấu sẽ nằm ở đây để quay lại tìm chuyến nhanh hơn.",
+        empty: "Chưa có nhà xe đã lưu.",
+        view: "Xem hồ sơ",
+        remove: "Bỏ lưu",
+      }
+    : {
+        title: "Saved operators",
+        body: "Operators you bookmark appear here for faster trip search later.",
+        empty: "No saved operators yet.",
+        view: "View profile",
+        remove: "Remove",
+      };
+
+  return (
+    <section className="container-shell pb-10">
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-soft">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="inline-flex items-center gap-2 text-2xl font-black text-ink">
+              <Heart className="h-5 w-5 text-brand-600" />
+              {copy.title}
+            </h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{copy.body}</p>
+          </div>
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-brand-700">{savedOperators.length}</span>
+        </div>
+        {savedOperators.length ? (
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {savedOperators.map((operator) => (
+              <article key={operator.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+                  <Image src={operator.logoUrl || "/images/placeholders/operator-card.svg"} alt={operator.name} fill sizes="48px" className="object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-black text-ink">{operator.name}</p>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs font-black">
+                    <Link href={withLang(`/operators/${operator.slug}`, locale)} className="text-brand-700">{copy.view}</Link>
+                    <button type="button" onClick={() => removeSavedOperator(operator.id)} className="text-slate-500 hover:text-rose-600">{copy.remove}</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500">{copy.empty}</p>
+        )}
+      </div>
+    </section>
+  );
 }
 
 export function BookingLookupClient({ locale }: { locale: Locale }) {
@@ -215,6 +322,8 @@ export function BookingLookupClient({ locale }: { locale: Locale }) {
           </form>
         </div>
       </div>
+
+      <SavedOperatorsPanel locale={locale} />
 
       {booking && status ? (
         <div className="container-shell py-10 lg:py-12">

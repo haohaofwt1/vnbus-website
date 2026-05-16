@@ -100,6 +100,7 @@ model User {
   role           UserRole       @default(STAFF)
   leadActivities LeadActivity[]
   auditLogs      AuditLog[]
+  savedOperators SavedOperator[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 }
@@ -180,8 +181,22 @@ model Operator {
   reviews      Review[]
   faqs         FAQ[]
   promotions   Promotion[]
+  savedBy      SavedOperator[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+
+model SavedOperator {
+  id         String   @id @default(cuid())
+  userId     String
+  operatorId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, operatorId])
+  @@index([operatorId])
+  @@index([userId])
 }
 
 model VehicleType {
@@ -345,7 +360,15 @@ model Review {
   routeId      String?
   customerName String
   rating       Int
+  punctualityRating      Int?
+  vehicleQualityRating   Int?
+  cleanlinessRating      Int?
+  serviceRating          Int?
+  pickupDropoffRating    Int?
+  supportRating          Int?
   comment      String
+  operatorReply String?
+  operatorRepliedAt DateTime?
   status       ReviewStatus  @default(PUBLISHED)
   bookingRequest BookingRequest? @relation(fields: [bookingRequestId], references: [id])
   operator     Operator?     @relation(fields: [operatorId], references: [id])

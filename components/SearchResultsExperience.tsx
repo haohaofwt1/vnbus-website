@@ -587,7 +587,7 @@ export function SearchResultsExperience({
           <div id="ai-preferences" className="mt-4 rounded-2xl bg-[linear-gradient(135deg,#EFF6FF,#F8FBFF)] p-3">
             <label className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-white px-3 py-2">
               <Bot className="h-4 w-4 shrink-0 text-[#2563EB]" />
-              <input value={aiText} onChange={(event) => applyAiPreference(event.target.value)} placeholder={copy.aiPlaceholder} className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#071A33] outline-none placeholder:text-slate-400" />
+              <input id="ai-preference-input" value={aiText} onChange={(event) => applyAiPreference(event.target.value)} placeholder={copy.aiPlaceholder} className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#071A33] outline-none placeholder:text-slate-400" />
             </label>
             {aiMessage ? <p className="mt-2 text-xs font-bold text-[#31507A]">{aiMessage}</p> : null}
           </div>

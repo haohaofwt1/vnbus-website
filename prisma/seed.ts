@@ -1254,6 +1254,56 @@ async function main() {
     }
   }
 
+  const hkOperator = operatorBySlug["hk-buslines"];
+  const hkTrip = tripRecords.find((trip) => trip.operatorId === hkOperator?.id);
+  if (hkOperator && hkTrip) {
+    const route = routeRecords.find((item) => item.id === hkTrip.routeId)!;
+    const routeSpec = routeSpecs.find((item) => item.slug === route.slug)!;
+    const fromCity = cityBySlug[routeSpec.from];
+    const toCity = cityBySlug[routeSpec.to];
+    const completedBooking = await prisma.bookingRequest.create({
+      data: {
+        routeId: route.id,
+        tripId: hkTrip.id,
+        fromCity: fromCity.name,
+        toCity: toCity.name,
+        departureDate: addDays(hkTrip.departureTime, -2),
+        passengerCount: 2,
+        vehicleType: vehicleRecords.find((vehicle) => vehicle.id === hkTrip.vehicleTypeId)?.name ?? "Cabin Sleeper",
+        customerName: "Minh Anh",
+        customerEmail: "minhanh@example.com",
+        customerPhone: "+84 900 000 888",
+        status: BookingStatus.COMPLETED,
+        source: "website",
+        totalAmount: hkTrip.price,
+        currency: hkTrip.currency,
+        reviewSubmittedAt: new Date(),
+      },
+    });
+
+    bookingRequests.push(completedBooking);
+
+    await prisma.review.create({
+      data: {
+        bookingRequestId: completedBooking.id,
+        operatorId: hkOperator.id,
+        routeId: route.id,
+        customerName: completedBooking.customerName,
+        rating: 5,
+        punctualityRating: 5,
+        vehicleQualityRating: 5,
+        cleanlinessRating: 4,
+        serviceRating: 5,
+        pickupDropoffRating: 4,
+        supportRating: 5,
+        comment: "Cabin sạch, điểm đón rõ ràng và nhân viên gọi xác nhận trước giờ đi. Chuyến Huế - Phong Nha chạy đúng lịch.",
+        operatorReply: "HK BusLines cảm ơn anh/chị đã tin tưởng và đặt vé qua VNBUS.",
+        operatorRepliedAt: new Date(),
+        status: ReviewStatus.PUBLISHED,
+      },
+    });
+  }
+
   await prisma.auditLog.createMany({
     data: [
       {

@@ -16,6 +16,9 @@ It is built with:
 ## Features
 
 - SEO-first public marketplace with dynamic route, operator, destination, FAQ, and blog pages
+- Modern public operator profiles at `/operators/[slug]` and `/nha-xe/[slug]`, with cover hero, trust metrics, trips, routes, vehicles, verified profile cards, reviews, and partner CTAs
+- Operator partner dashboard foundation at `/operator` for profile completeness, smart warnings, trips, bookings, routes, vehicles, plan status, and B2B module navigation
+- Partner claim and pricing entry points at `/operator/claim/[slug]` and `/partner/pricing`
 - PostgreSQL-backed route, trip, operator, city, FAQ, blog, review, booking, payment, and audit data
 - Server-validated booking request and contact inquiry flows
 - Email/password admin login with httpOnly cookie sessions for ADMIN and STAFF users
@@ -94,6 +97,12 @@ The seed script creates:
 - Lead activities
 - Audit logs
 
+HK BusLines demo data is included in `prisma/seed.ts`. For a focused import/update of the Hue - Phong Nha HK BusLines dataset, run:
+
+```bash
+npx tsx scripts/import-hk-buslines-hue-phong-nha.ts
+```
+
 ## 7. Run locally
 
 ```bash
@@ -116,6 +125,21 @@ Seeded default admin credentials:
 - Password: `admin123`
 
 Change the seeded password immediately before any shared or production-like environment.
+
+## 8.1 Operator profile and partner routes
+
+Public operator profile:
+
+- `/operators/hk-buslines`
+- `/nha-xe/hk-buslines`
+
+Partner/operator routes:
+
+- `/operator` - operator dashboard foundation using existing Prisma data
+- `/operator/claim/hk-buslines` - claim/verification entry point
+- `/partner/pricing` - Basic, Verified, Pro, and Growth plan overview
+
+The current auth model supports `ADMIN` and `STAFF` sessions for the existing admin area. The `/operator` dashboard is structured for operator owner/staff permissions, but full row-level operator auth should be wired when dedicated operator login is added.
 
 ## 9. Build for production
 

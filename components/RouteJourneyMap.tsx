@@ -200,6 +200,11 @@ export const RouteJourneyMap = memo(function RouteJourneyMap({
   const dropoff = display(dropoffName ?? selectedTrip?.dropoffPoint, copy.updating);
   const canOpenExternalMap = hasExactCoordinates;
   const seats = formatSeats(copy.seatsLeft, selectedTrip?.availableSeats);
+  const selectedTripOffer =
+    selectedTrip?.promotionOffer && selectedTrip.promotionOffer.discountAmount > 0
+      ? selectedTrip.promotionOffer
+      : null;
+  const selectedTripPrice = selectedTripOffer?.finalAmount ?? selectedTrip?.price;
   const googleMapsUrl =
     selectedTrip &&
     selectedTrip.pickupLatitude !== null &&
@@ -312,7 +317,7 @@ export const RouteJourneyMap = memo(function RouteJourneyMap({
               <p className="mt-1 text-sm font-bold text-[#64748B]">{selectedTrip.vehicleType.name}{seats ? ` · ${seats}` : ""}</p>
             </div>
             <p className="shrink-0 text-right font-[family-name:var(--font-heading)] text-xl font-black text-[#FF6A1A]">
-              {formatCurrency(selectedTrip.price, selectedTrip.currency)}
+              {selectedTripPrice !== undefined ? formatCurrency(selectedTripPrice, selectedTrip.currency) : copy.updating}
               <span className="block text-xs font-bold text-[#64748B]">{copy.perPassenger}</span>
             </p>
           </div>

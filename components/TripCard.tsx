@@ -57,6 +57,7 @@ export type TripCardTrip = {
     }>;
   };
   vehicleType: {
+    id?: string;
     name: string;
     slug: string;
     imageUrl?: string;
@@ -72,6 +73,7 @@ export type TripCardTrip = {
     distanceKm?: number;
     estimatedDuration?: string;
     commonRoad?: string;
+    imageUrl?: string;
     routePolyline?: string;
     borderCheckpointName?: string;
     borderCheckpointLatitude?: number | null;
@@ -91,8 +93,8 @@ export type TripCardTrip = {
       comment: string;
       createdAt: Date;
     }>;
-    fromCity: { name: string };
-    toCity: { name: string };
+    fromCity: { name: string; slug?: string };
+    toCity: { name: string; slug?: string };
   };
   promotionOffer?: PublicPromotionOffer | null;
 };

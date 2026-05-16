@@ -94,6 +94,7 @@ export default async function SearchPage({
       noTripsBody:
         "Try removing one or two filters, switching vehicle type, or choosing a nearby departure or arrival city.",
       smartHelp: "Use quick ranking to reorder results by what matters most to you.",
+      allJourneys: "All journeys",
     },
     vi: {
       title: "Chọn đúng chuyến phù hợp, không chỉ nhìn chuyến rẻ nhất.",
@@ -106,6 +107,7 @@ export default async function SearchPage({
       noTripsBody:
         "Hãy thử bỏ bớt một vài bộ lọc, đổi loại xe hoặc chọn điểm đi và điểm đến lân cận.",
       smartHelp: "Dùng ưu tiên kết quả để sắp xếp nhanh theo điều bạn quan tâm nhất.",
+      allJourneys: "Tất cả hành trình",
     },
     ko: {
       title: "가장 싼 좌석보다, 내 여행에 맞는 이동을 고르세요.",
@@ -118,6 +120,7 @@ export default async function SearchPage({
       noTripsBody:
         "필터를 일부 해제하거나 차량 유형을 바꾸고, 인근 출발지 또는 도착지를 선택해 보세요.",
       smartHelp: "빠른 우선순위로 내가 더 중요하게 보는 기준에 맞게 결과를 다시 정렬하세요.",
+      allJourneys: "전체 여정",
     },
     ja: {
       title: "最安値だけでなく、自分に合う便を選ぶ。",
@@ -130,6 +133,7 @@ export default async function SearchPage({
       noTripsBody:
         "いくつかのフィルターを外すか、車両タイプを変更するか、近くの出発地・到着地を選んでください。",
       smartHelp: "クイック優先順位で、重視したい条件に合わせて結果を並べ替えられます。",
+      allJourneys: "すべての旅程",
     },
   }[locale];
 
@@ -151,8 +155,11 @@ export default async function SearchPage({
     ? searchData.vehicleTypes.find((item) => item.slug === filters.vehicleType)?.name ??
       copy.anyVehicle
     : copy.anyVehicle;
-  const routeDistance = rankedTrips.find((trip) => trip.route.distanceKm)?.route.distanceKm;
-  const averageDurationMinutes = rankedTrips.length
+  const hasSpecificRoute = Boolean(filters.from && filters.to);
+  const routeDistance = hasSpecificRoute
+    ? rankedTrips.find((trip) => trip.route.distanceKm)?.route.distanceKm
+    : undefined;
+  const averageDurationMinutes = hasSpecificRoute && rankedTrips.length
     ? Math.round(rankedTrips.reduce((sum, trip) => sum + trip.duration, 0) / rankedTrips.length)
     : 0;
   const averageDuration = averageDurationMinutes
@@ -173,8 +180,9 @@ export default async function SearchPage({
             summary={{
               fromLabel,
               toLabel,
+              titleLabel: !filters.from && !filters.to ? copy.allJourneys : undefined,
               departureDate: filters.departureDate,
-              passengers: filters.passengers ?? "1",
+              passengers: filters.passengers,
               vehicleTypeLabel,
               tripCount: rankedTrips.length,
               distanceKm: routeDistance,

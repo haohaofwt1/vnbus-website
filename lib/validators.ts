@@ -233,6 +233,12 @@ export const publicReviewSchema = z
     operatorId: optionalString,
     customerName: z.string().trim().min(2),
     rating: z.coerce.number().int().min(1).max(5),
+    punctualityRating: optionalNumber,
+    vehicleQualityRating: optionalNumber,
+    cleanlinessRating: optionalNumber,
+    serviceRating: optionalNumber,
+    pickupDropoffRating: optionalNumber,
+    supportRating: optionalNumber,
     comment: z.string().trim().min(12),
     returnTo: z.string().trim().min(1),
   })
@@ -247,7 +253,14 @@ export const adminReviewSchema = z.object({
   operatorId: optionalString,
   customerName: z.string().trim().min(2),
   rating: z.coerce.number().int().min(1).max(5),
+  punctualityRating: optionalNumber,
+  vehicleQualityRating: optionalNumber,
+  cleanlinessRating: optionalNumber,
+  serviceRating: optionalNumber,
+  pickupDropoffRating: optionalNumber,
+  supportRating: optionalNumber,
   comment: z.string().trim().min(12),
+  operatorReply: optionalString,
   status: z.enum(["PUBLISHED", "PENDING", "HIDDEN"]),
 });
 
